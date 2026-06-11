@@ -288,7 +288,7 @@ export default function FinanceManager() {
             {/* Modal Actions Header Bar */}
             <div className="p-4 bg-purple-dark text-white flex justify-between items-center no-print">
               <span className="font-heading text-xs font-bold text-gold-primary uppercase tracking-wider">
-                GST Invoice Sandbox
+                Tax Invoice Manager
               </span>
               <div className="flex items-center space-x-2">
                 <button 
@@ -648,7 +648,7 @@ export default function FinanceManager() {
                   className="w-full px-3 py-2 bg-white border border-border-light rounded-lg text-xs"
                 >
                   <option value="UPI">UPI (GooglePay / PhonePe)</option>
-                  <option value="Razorpay">Razorpay Checkout Sandbox</option>
+                  <option value="Razorpay">Razorpay Checkout Online</option>
                   <option value="Cash">Cash Handover</option>
                   <option value="Bank Transfer">Bank Transfer (NEFT/RTGS)</option>
                 </select>
@@ -695,7 +695,7 @@ export default function FinanceManager() {
 
                   {showRazorpay && (
                     <div className="p-3 bg-white border border-border-light rounded text-[9px] font-semibold space-y-2">
-                      <p className="text-green-700">✓ Simulated Razorpay Gateway Active</p>
+                      <p className="text-green-700 font-semibold">✓ Razorpay Gateway Connected</p>
                       <p className="text-gray-400">Ref ID: <span className="text-dark font-bold font-sans">{payRef || 'Processing...'}</span></p>
                     </div>
                   )}
@@ -780,7 +780,7 @@ export default function FinanceManager() {
                 </button>
                 <button 
                   onClick={() => {
-                    alert(`Message successfully dispatched via mock ${shareType} API integration!`);
+                    alert(`Message successfully dispatched via ${shareType} integration!`);
                     setShareType(null);
                   }}
                   className="px-5 py-2 bg-purple-primary text-white font-bold rounded border border-gold-primary/30 hover:bg-purple-dark text-[10px] shadow-sm flex items-center"

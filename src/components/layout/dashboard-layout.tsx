@@ -44,28 +44,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   
   const [currentUser, setCurrentUser] = useState<Profile | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
-  const [allProfiles, setAllProfiles] = useState<Profile[]>([]);
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
     // Initialize user profile
     const user = db.getCurrentUser();
-    const profiles = db.getProfiles();
     setCurrentUser(user);
-    setAllProfiles(profiles);
     setAuthChecked(true);
   }, []);
-
-  const handleRoleChange = (userId: string) => {
-    db.setCurrentUser(userId);
-    const updated = db.getCurrentUser();
-    setCurrentUser(updated);
-    setRoleMenuOpen(false);
-    
-    // Redirect to home/dashboard on role switch to re-validate permissions
-    router.refresh();
-  };
 
   // Permission verification
   const currentItem = SIDEBAR_ITEMS.find(item => pathname.startsWith(item.href));
@@ -252,45 +238,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           {/* TOP RIGHT TOOLBAR */}
           <div className="flex items-center space-x-4 ml-auto">
-            {/* ROLE SELECTOR (FOR DEMO/TESTING RBAC) */}
-            <div className="relative">
-              <button
-                onClick={() => setRoleMenuOpen(!roleMenuOpen)}
-                className="flex items-center space-x-2 px-3 py-1.5 bg-ivory border border-border-light hover:border-gold-primary rounded-lg text-xs font-medium text-dark transition-all shadow-sm"
-                title="Switch role instantly to test access control permissions"
-              >
-                <ShieldAlert className="h-4 w-4 text-gold-primary animate-pulse" />
-                <span className="hidden sm:inline">Role Simulator:</span>
-                <span className="font-semibold text-purple-primary">{currentUser.role}</span>
-              </button>
-
-              {roleMenuOpen && (
-                <div className="absolute right-0 mt-2 w-64 bg-white border border-border-light rounded-xl shadow-luxury-lg py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-200">
-                  <div className="px-4 py-2 border-b border-border-light">
-                    <p className="text-xs font-bold text-dark uppercase tracking-wider">Simulate Workspace Role</p>
-                    <p className="text-[10px] text-gray-500 mt-0.5">Test restricted page modules in real-time.</p>
-                  </div>
-                  <div className="max-h-60 overflow-y-auto py-1">
-                    {allProfiles.map((prof) => (
-                      <button
-                        key={prof.id}
-                        onClick={() => handleRoleChange(prof.id)}
-                        className={cn(
-                          "w-full text-left px-4 py-2 text-xs flex flex-col transition-colors",
-                          prof.id === currentUser.id 
-                            ? "bg-purple-light/40 text-purple-primary font-semibold border-l-4 border-purple-primary" 
-                            : "hover:bg-ivory text-dark"
-                        )}
-                      >
-                        <span className="font-medium">{prof.fullName}</span>
-                        <span className="text-[10px] text-gray-500 italic mt-0.5">{prof.role}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-
             {/* NOTIFICATIONS */}
             <button className="p-2 text-gray-400 hover:text-purple-primary rounded-full hover:bg-ivory relative transition-colors">
               <Bell className="h-5 w-5" />
@@ -310,14 +257,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </div>
               <h3 className="font-heading text-2xl font-bold text-purple-dark">Access Denied</h3>
               <p className="text-gray-600 max-w-md mt-2 text-sm">
-                Your simulated role <span className="font-semibold text-purple-primary">"{currentUser.role}"</span> does not have authorization to view the <span className="font-medium text-dark">{currentItem?.name}</span> module.
+                Your role <span className="font-semibold text-purple-primary">"{currentUser.role}"</span> does not have authorization to view the <span className="font-medium text-dark">{currentItem?.name}</span> module.
               </p>
-              <button
-                onClick={() => setRoleMenuOpen(true)}
-                className="mt-6 px-4 py-2 bg-purple-primary text-white rounded-lg hover:bg-purple-dark shadow-md transition-all font-medium text-sm border border-gold-primary/30"
+              <Link
+                href="/dashboard"
+                className="mt-6 px-4 py-2 bg-purple-primary text-white rounded-lg hover:bg-purple-dark shadow-md transition-all font-medium text-sm border border-gold-primary/30 inline-block"
               >
-                Switch Role to Owner or Super Admin
-              </button>
+                Return to Dashboard
+              </Link>
             </div>
           )}
         </main>
