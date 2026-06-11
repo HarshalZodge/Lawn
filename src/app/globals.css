@@ -1,0 +1,109 @@
+@import "tailwindcss";
+
+@theme {
+  --color-purple-primary: #5B2C6F;
+  --color-purple-dark: #4A235A;
+  --color-purple-light: #EBDEF0;
+  --color-gold-primary: #C9A227;
+  --color-gold-dark: #9A7D0A;
+  --color-gold-light: #FEF9E7;
+  --color-green-primary: #0E6251;
+  --color-green-dark: #0B5345;
+  --color-green-light: #D1F2EB;
+  --color-ivory: #F8F4ED;
+  --color-border-light: #E6DCC8;
+  --color-dark: #2C2C2C;
+  
+  --font-sans: var(--font-inter), sans-serif;
+  --font-heading: var(--font-poppins), sans-serif;
+  
+  --shadow-luxury: 0 4px 20px -2px rgba(91, 44, 111, 0.08), 0 2px 10px -1px rgba(201, 162, 39, 0.04);
+  --shadow-luxury-lg: 0 10px 30px -5px rgba(91, 44, 111, 0.12), 0 4px 15px -2px rgba(201, 162, 39, 0.06);
+}
+
+:root {
+  --background: #F8F4ED;
+  --foreground: #2C2C2C;
+}
+
+body {
+  background-color: #F8F4ED;
+  color: #2C2C2C;
+  font-family: var(--font-inter), sans-serif;
+}
+
+/* Custom styles for luxury styling effects */
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(201, 162, 39, 0) 0%,
+    rgba(201, 162, 39, 0.15) 50%,
+    rgba(201, 162, 39, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 2.5s infinite;
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #C9A227 0%, #9A7D0A 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.purple-gradient-text {
+  background: linear-gradient(135deg, #5B2C6F 0%, #341F3C 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gold-border-glow {
+  box-shadow: 0 0 10px rgba(201, 162, 39, 0.2);
+  border-color: #C9A227;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Print utilities for GST invoices */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  #printable-invoice, #printable-invoice * {
+    visibility: visible;
+  }
+  #printable-invoice {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    border: none;
+    box-shadow: none;
+  }
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  .print-only {
+    display: block !important;
+    visibility: visible !important;
+  }
+  .print-shadow-none {
+    box-shadow: none !important;
+  }
+  .print-border {
+    border: 1px solid #2C2C2C !important;
+  }
+}
