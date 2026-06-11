@@ -18,10 +18,6 @@ const SEED_PROFILES: Profile[] = [
   { id: 'u1', email: 'owner@bhagyalaxmi.com', fullName: 'Deepak Zodge', phone: '+91 94222 12345', role: 'Owner', status: 'Active', createdAt: '2026-01-01T10:00:00Z' },
   { id: 'u2', email: 'harshal@bhagyalaxmi.com', fullName: 'Harshal Zodge', phone: '+91 94223 12346', role: 'Manager', status: 'Active', createdAt: '2026-01-02T10:00:00Z' },
   { id: 'u3', email: 'kiran@bhagyalaxmi.com', fullName: 'Kiran Zodge', phone: '+91 94224 12347', role: 'Manager', status: 'Active', createdAt: '2026-01-03T10:00:00Z' },
-  { id: 'u4', email: 'coordinator@bhagyalaxmi.com', fullName: 'Vikram Shinde', phone: '+91 98220 98765', role: 'Event Coordinator', status: 'Active', createdAt: '2026-01-04T10:00:00Z' },
-  { id: 'u5', email: 'reception@bhagyalaxmi.com', fullName: 'Priya Joshi', phone: '+91 98600 11223', role: 'Reception Staff', status: 'Active', createdAt: '2026-01-05T10:00:00Z' },
-  { id: 'st5_user', email: 'arjun@bhagyalaxmi.com', fullName: 'Arjun Rathod', phone: '+91 98211 44556', role: 'Staff', status: 'Active', createdAt: '2026-02-01T10:00:00Z' },
-  { id: 'st6_user', email: 'sunita@bhagyalaxmi.com', fullName: 'Sunita Gawade', phone: '+91 98500 77889', role: 'Staff', status: 'Active', createdAt: '2026-02-10T10:00:00Z' },
 ];
 
 const SEED_VENUES: Venue[] = [
@@ -56,230 +52,27 @@ const SEED_VENDORS: Vendor[] = [
   { id: 'vn4', name: 'Anil Shinde', businessName: 'Shinde Power Solutions', category: 'Generator', phone: '+91 98765 43213', email: 'anil@shindepower.com', contractTerms: 'Supplies backup fuel. Maintenance logs shared monthly.', rating: 4.6, createdAt: '2026-01-13T12:00:00Z' },
 ];
 
-const SEED_CUSTOMERS: Customer[] = [
-  { id: 'c1', fullName: 'Abhijit Shinde', phone: '+91 94220 12345', email: 'abhijit.shinde@gmail.com', address: 'Savedi, Ahilyanagar', aadhaarNumber: '123456789012', panNumber: 'ABCDE1234F', notes: 'VIP family. Groom is a software architect in Pune.', createdAt: '2026-05-01T10:00:00Z' },
-  { id: 'c2', fullName: 'Savita Pawar', phone: '+91 98900 87654', email: 'savita.pawar@yahoo.com', address: 'Rahuri, Ahilyanagar District', aadhaarNumber: '987654321098', panNumber: 'WXYZ6789A', notes: 'Prefers mild traditional decorations. Granddaughter of local cooperative leader.', createdAt: '2026-05-15T12:00:00Z' },
-  { id: 'c3', fullName: 'Rahul Deshmukh', phone: '+91 94230 45678', email: 'rahul@deshmukhmotors.com', address: 'Bhingar, Ahilyanagar', aadhaarNumber: '456712347890', panNumber: 'PQRST4567Z', notes: 'Local businessman. Booked Combined Venue for 2500+ guests.', createdAt: '2026-05-20T14:30:00Z' },
-  { id: 'c4', fullName: 'Meera Kulkarni', phone: '+91 98600 54321', email: 'meera.kulkarni@gmail.com', address: 'Kothrud, Pune', aadhaarNumber: '567890123456', panNumber: 'LMNOP8901K', notes: 'Requested specific flower arrangements (Peacock feathers theme).', createdAt: '2026-06-01T09:15:00Z' },
-];
-
-// Today is June 11, 2026.
-const SEED_BOOKINGS: Booking[] = [
-  {
-    id: 'b1',
-    bookingNumber: 'BL-202606-0001',
-    customerId: 'c1',
-    venueId: 'v3',
-    packageId: 'p2',
-    eventType: 'Wedding',
-    eventDate: '2026-06-12', // Tomorrow
-    slotType: 'Full Day Slot',
-    guestCount: 1500,
-    decorationTheme: 'Heritage Paithani Royal Theme',
-    cateringVendorId: 'vn1',
-    specialRequests: 'Need clean rooms early by 5:00 AM. Generator backup checked twice.',
-    totalAmount: 350000,
-    advancePaid: 150000,
-    balanceAmount: 200000,
-    status: 'Confirmed',
-    createdAt: '2026-05-02T11:00:00Z',
-  },
-  {
-    id: 'b2',
-    bookingNumber: 'BL-202606-0002',
-    customerId: 'c2',
-    venueId: 'v1',
-    packageId: 'p1',
-    eventType: 'Haldi',
-    eventDate: '2026-06-12', // Tomorrow morning
-    slotType: 'Morning Slot',
-    guestCount: 500,
-    decorationTheme: 'Yellow Marigold Floral Canopy',
-    cateringVendorId: 'vn1',
-    specialRequests: 'Haldi staging with fresh yellow and orange marigolds.',
-    totalAmount: 180000,
-    advancePaid: 50000,
-    balanceAmount: 130000,
-    status: 'Advance Paid',
-    createdAt: '2026-05-16T10:00:00Z',
-  },
-  {
-    id: 'b3',
-    bookingNumber: 'BL-202606-0003',
-    customerId: 'c3',
-    venueId: 'v3',
-    packageId: 'p3',
-    eventType: 'Reception',
-    eventDate: '2026-06-18', // Next week
-    slotType: 'Evening Slot',
-    guestCount: 2500,
-    decorationTheme: 'Modern Glassmorphic LED Backlight Theme',
-    cateringVendorId: 'vn1',
-    specialRequests: 'Require tight security at VIP entrance. 5 VIP parking slots allocated.',
-    totalAmount: 280000,
-    advancePaid: 280000,
-    balanceAmount: 0,
-    status: 'Confirmed', // Fully Paid Event
-    createdAt: '2026-05-21T15:00:00Z',
-  },
-  {
-    id: 'b4',
-    bookingNumber: 'BL-202606-0004',
-    customerId: 'c4',
-    venueId: 'v2',
-    eventType: 'Engagement',
-    eventDate: '2026-06-25', // Late June
-    slotType: 'Afternoon Slot',
-    guestCount: 350,
-    decorationTheme: 'Classic Pastel Orchids and Lilies',
-    specialRequests: 'Requires sound permit check and customized seating layout.',
-    totalAmount: 200000,
-    advancePaid: 0,
-    balanceAmount: 200000,
-    status: 'Pending',
-    createdAt: '2026-06-02T10:00:00Z',
-  },
-  {
-    id: 'b5',
-    bookingNumber: 'BL-202605-0098',
-    customerId: 'c1',
-    venueId: 'v1',
-    eventType: 'Engagement',
-    eventDate: '2026-05-10', // Past event
-    slotType: 'Morning Slot',
-    guestCount: 600,
-    decorationTheme: 'Traditional Mango Leaves and Roses',
-    totalAmount: 150000,
-    advancePaid: 150000,
-    balanceAmount: 0,
-    status: 'Completed',
-    createdAt: '2026-04-10T09:00:00Z',
-  }
-];
-
-const SEED_PAYMENTS: Payment[] = [
-  { id: 'pay1', bookingId: 'b1', paymentNumber: 'BL-PAY-10001', amount: 150000, paymentDate: '2026-05-02T11:30:00Z', paymentMethod: 'Bank Transfer', transactionId: 'TXN987654321', paymentStatus: 'Success', notes: 'Initial booking advance deposit.' },
-  { id: 'pay2', bookingId: 'b2', paymentNumber: 'BL-PAY-10002', amount: 50000, paymentDate: '2026-05-16T10:45:00Z', paymentMethod: 'UPI', transactionId: 'upi.9890087654@paytm', paymentStatus: 'Success', notes: 'Haldi booking partial advance.' },
-  { id: 'pay3', bookingId: 'b3', paymentNumber: 'BL-PAY-10003', amount: 280000, paymentDate: '2026-05-21T15:20:00Z', paymentMethod: 'Razorpay', transactionId: 'pay_Nsh928nsl19', paymentStatus: 'Success', notes: 'Full package payment made via online link.' },
-  { id: 'pay4', bookingId: 'b5', paymentNumber: 'BL-PAY-10000', amount: 150000, paymentDate: '2026-04-10T09:30:00Z', paymentMethod: 'Cash', paymentStatus: 'Success', notes: 'Handed over in office.' },
-];
-
-const SEED_INVOICES: Invoice[] = [
-  {
-    id: 'inv1',
-    invoiceNumber: 'BL-INV-202606-0001',
-    bookingId: 'b1',
-    subtotal: 296610.17, // 350000 / 1.18
-    cgstRate: 9,
-    sgstRate: 9,
-    cgstAmount: 26694.92,
-    sgstAmount: 26694.92,
-    totalGst: 53389.83,
-    grandTotal: 350000,
-    advanceDeducted: 150000,
-    balanceDue: 200000,
-    status: 'Partially Paid',
-    issuedDate: '2026-05-02',
-    dueDate: '2026-06-11',
-  },
-  {
-    id: 'inv2',
-    invoiceNumber: 'BL-INV-202606-0002',
-    bookingId: 'b2',
-    subtotal: 152542.37,
-    cgstRate: 9,
-    sgstRate: 9,
-    cgstAmount: 13728.81,
-    sgstAmount: 13728.81,
-    totalGst: 27457.63,
-    grandTotal: 180000,
-    advanceDeducted: 50000,
-    balanceDue: 130000,
-    status: 'Partially Paid',
-    issuedDate: '2026-05-16',
-    dueDate: '2026-06-11',
-  },
-  {
-    id: 'inv3',
-    invoiceNumber: 'BL-INV-202606-0003',
-    bookingId: 'b3',
-    subtotal: 237288.14,
-    cgstRate: 9,
-    sgstRate: 9,
-    cgstAmount: 21355.93,
-    sgstAmount: 21355.93,
-    totalGst: 42711.86,
-    grandTotal: 280000,
-    advanceDeducted: 280000,
-    balanceDue: 0,
-    status: 'Paid',
-    issuedDate: '2026-05-21',
-    dueDate: '2026-06-18',
-  },
-];
-
-const SEED_CHECKLISTS: ChecklistTask[] = [
-  // Live Tasks for Booking 1 (Tomorrow's Royal Wedding)
-  { id: 'ch1', bookingId: 'b1', taskName: 'Install Royal Heritage Paithani Stage Decor', category: 'Stage', status: 'In Progress', assignedStaffId: 'u4', updatedAt: '2026-06-11T21:00:00Z' },
-  { id: 'ch2', bookingId: 'b1', taskName: 'Arrange Wedding Hall Seating (1000 chairs)', category: 'Stage', status: 'Completed', assignedStaffId: 'u4', updatedAt: '2026-06-11T18:00:00Z' },
-  { id: 'ch3', bookingId: 'b1', taskName: 'Verify Kitchen gas pipelines & water supply', category: 'Catering', status: 'Completed', assignedStaffId: 'u2', updatedAt: '2026-06-11T16:30:00Z' },
-  { id: 'ch4', bookingId: 'b1', taskName: 'Setup Buffet Tables & Premium Lawn Layout', category: 'Catering', status: 'In Progress', assignedStaffId: 'u4', updatedAt: '2026-06-11T20:15:00Z' },
-  { id: 'ch5', bookingId: 'b1', taskName: 'Test JBL Sound Rigs & Stage Lights', category: 'Sound', status: 'Completed', assignedStaffId: 'u4', updatedAt: '2026-06-11T19:00:00Z' },
-  { id: 'ch6', bookingId: 'b1', taskName: 'Deep clean Bride & Groom AC Suites', category: 'Cleaning', status: 'Completed', assignedStaffId: 'u5', updatedAt: '2026-06-11T15:00:00Z' },
-  { id: 'ch7', bookingId: 'b1', taskName: 'Check diesel fuel levels in dual generator units', category: 'Generator', status: 'Pending', assignedStaffId: 'u2', updatedAt: '2026-06-11T10:00:00Z' },
-  { id: 'ch8', bookingId: 'b1', taskName: 'Startup test run on 70 kVA and 25 kVA generator units', category: 'Generator', status: 'Completed', assignedStaffId: 'u4', updatedAt: '2026-06-11T17:30:00Z' },
-  { id: 'ch9', bookingId: 'b1', taskName: 'Deploy 4 VIP Security Guards at Entrance Gate', category: 'Security', status: 'Pending', assignedStaffId: 'u2', updatedAt: '2026-06-11T10:00:00Z' },
-  
-  // Tasks for Booking 2 (Tomorrow's Haldi)
-  { id: 'ch2_1', bookingId: 'b2', taskName: 'Haldi Canopy Floral Setup', category: 'Stage', status: 'In Progress', assignedStaffId: 'u4', updatedAt: '2026-06-11T20:00:00Z' },
-  { id: 'ch2_2', bookingId: 'b2', taskName: 'Setup traditional morning breakfast counter', category: 'Catering', status: 'Pending', assignedStaffId: 'u2', updatedAt: '2026-06-11T10:00:00Z' },
-];
+const SEED_CUSTOMERS: Customer[] = [];
+const SEED_BOOKINGS: Booking[] = [];
+const SEED_PAYMENTS: Payment[] = [];
+const SEED_INVOICES: Invoice[] = [];
+const SEED_CHECKLISTS: ChecklistTask[] = [];
 
 const SEED_STAFF: StaffMember[] = [
   { id: 'st_owner', profileId: 'u1', fullName: 'Deepak Zodge', role: 'Owner', designation: 'Managing Director & Owner', salary: 150000, contactNumber: '+91 94222 12345', joiningDate: '2026-01-01', status: 'Active' },
   { id: 'st1', profileId: 'u2', fullName: 'Harshal Zodge', role: 'Manager', designation: 'Operations Manager', salary: 35000, contactNumber: '+91 94223 12346', joiningDate: '2026-01-02', status: 'Active' },
   { id: 'st2', profileId: 'u3', fullName: 'Kiran Zodge', role: 'Manager', designation: 'Finance & Booking Manager', salary: 32000, contactNumber: '+91 94224 12347', joiningDate: '2026-01-03', status: 'Active' },
-  { id: 'st3', profileId: 'u4', fullName: 'Vikram Shinde', role: 'Event Coordinator', designation: 'Site Coordinator', salary: 22000, contactNumber: '+91 98220 98765', joiningDate: '2026-01-04', status: 'Active' },
-  { id: 'st4', profileId: 'u5', fullName: 'Priya Joshi', role: 'Reception Staff', designation: 'Front Desk Lead', salary: 18000, contactNumber: '+91 98600 11223', joiningDate: '2026-01-05', status: 'Active' },
-  { id: 'st5', profileId: 'st5_user', fullName: 'Arjun Rathod', role: 'Staff', designation: 'Security Supervisor', salary: 15000, contactNumber: '+91 98211 44556', joiningDate: '2026-02-01', status: 'Active' },
-  { id: 'st6', profileId: 'st6_user', fullName: 'Sunita Gawade', role: 'Staff', designation: 'Housekeeping Supervisor', salary: 12000, contactNumber: '+91 98500 77889', joiningDate: '2026-02-10', status: 'Active' },
 ];
 
-const SEED_ATTENDANCE: AttendanceRecord[] = [
-  { id: 'at_owner', staffId: 'st_owner', logDate: '2026-06-11', checkIn: '08:30', checkOut: '19:00', status: 'Present', notes: 'Venue supervision.' },
-  { id: 'at1', staffId: 'st1', logDate: '2026-06-11', checkIn: '09:00', checkOut: '19:30', status: 'Present', notes: 'Managed lawn setup checks.' },
-  { id: 'at2', staffId: 'st2', logDate: '2026-06-11', checkIn: '09:30', checkOut: '18:00', status: 'Present' },
-  { id: 'at3', staffId: 'st3', logDate: '2026-06-11', checkIn: '08:45', checkOut: '21:30', status: 'Present', notes: 'Overtime for tomorrow setup preparation.' },
-  { id: 'at4', staffId: 'st4', logDate: '2026-06-11', checkIn: '09:00', checkOut: '18:00', status: 'Present' },
-  { id: 'at5', staffId: 'st5', logDate: '2026-06-11', checkIn: '07:00', checkOut: '19:00', status: 'Present' },
-  { id: 'at6', staffId: 'st6', logDate: '2026-06-11', checkIn: '08:00', checkOut: '17:00', status: 'Present' },
-];
-
+const SEED_ATTENDANCE: AttendanceRecord[] = [];
 const SEED_GENERATORS_INFO: GeneratorInfo[] = [
   { id: 'gen_70kva', name: '70 kVA Silent Genset (Main)', capacityKVA: 70, status: 'Operational' },
   { id: 'gen_25kva', name: '25 kVA Silent Genset (Aux/Kitchen)', capacityKVA: 25, status: 'Operational' }
 ];
 
-const SEED_GENERATOR_LOGS: GeneratorLog[] = [
-  { id: 'genl1', generatorId: 'gen_70kva', logDate: '2026-06-08', fuelLevelPercent: 95, runtimeHours: 4.5, backupStatus: 'Normal', serviceNotes: 'Refueled 60 liters diesel in Main Gen.' },
-  { id: 'genl2', generatorId: 'gen_25kva', logDate: '2026-06-08', fuelLevelPercent: 90, runtimeHours: 1.0, backupStatus: 'Normal' },
-  { id: 'genl3', generatorId: 'gen_70kva', logDate: '2026-06-11', fuelLevelPercent: 85, runtimeHours: 3.5, backupStatus: 'Normal', serviceNotes: 'Tested system for tomorrow\'s grand wedding. Load check stable.' },
-  { id: 'genl4', generatorId: 'gen_25kva', logDate: '2026-06-11', fuelLevelPercent: 95, runtimeHours: 0.5, backupStatus: 'Normal' },
-];
-
-const SEED_EXPENSES: Expense[] = [
-  { id: 'e1', category: 'Diesel', amount: 5500, expenseDate: '2026-06-08', description: '60 Liters for backup Generator' },
-  { id: 'e2', category: 'Maintenance', amount: 8000, expenseDate: '2026-06-05', description: 'AC unit servicing in Bride room and Groom suite' },
-  { id: 'e3', category: 'Office Supplies', amount: 1800, expenseDate: '2026-06-10', description: 'Printing papers & bill book printing' },
-  { id: 'e4', category: 'Salary', amount: 130000, expenseDate: '2026-06-01', description: 'Staff salaries for May 2026' },
-  { id: 'e5', category: 'Electricity', amount: 24000, expenseDate: '2026-06-02', description: 'MSEDCL electricity bill payment' },
-];
-
-const SEED_DOCUMENTS: Document[] = [
-  { id: 'doc1', customerId: 'c1', bookingId: 'b1', name: 'Abhijit_Shinde_Aadhaar.pdf', category: 'Aadhaar', filePath: '#', uploadedAt: '2026-05-02T11:15:00Z' },
-  { id: 'doc2', customerId: 'c1', bookingId: 'b1', name: 'Bhagyalaxmi_Agreement_BL-202606-0001.pdf', category: 'Agreement', filePath: '#', uploadedAt: '2026-05-02T11:20:00Z' },
-  { id: 'doc3', customerId: 'c2', bookingId: 'b2', name: 'Savita_Pawar_PAN.pdf', category: 'PAN', filePath: '#', uploadedAt: '2026-05-16T10:15:00Z' },
-];
+const SEED_GENERATOR_LOGS: GeneratorLog[] = [];
+const SEED_EXPENSES: Expense[] = [];
+const SEED_DOCUMENTS: Document[] = [];
 
 const SEED_WHATSAPP: WhatsAppTemplate[] = [
   { id: 'w1', templateName: 'Booking Confirmation', messageBody: 'Namaskar {{customer_name}}, Dhanyawad! Your booking for {{event_type}} at Bhagyalaxmi Lawns on {{event_date}} is confirmed. Booking ID: {{booking_id}}. We look forward to hosting your celebration! - Bhagyalaxmi Lawns', variables: ['customer_name', 'event_type', 'event_date', 'booking_id'], isActive: true },
@@ -288,19 +81,14 @@ const SEED_WHATSAPP: WhatsAppTemplate[] = [
   { id: 'w4', templateName: 'Thank You & Feedback', messageBody: 'Namaskar {{customer_name}}, thank you for choosing Bhagyalaxmi Lawns for your special day. We hope you and your guests had a memorable experience. Please share your valuable feedback here: {{feedback_link}} - Bhagyalaxmi Lawns', variables: ['customer_name', 'feedback_link'], isActive: true },
 ];
 
-const SEED_AUDIT_LOGS: AuditLog[] = [
-  { id: 'aud1', userId: 'u2', userName: 'Harshal Zodge', action: 'Created Booking BL-202606-0001', tableName: 'bookings', timestamp: '2026-05-02T11:00:00Z' },
-  { id: 'aud2', userId: 'u3', userName: 'Kiran Zodge', action: 'Approved Payment for BL-202606-0001 (Rs. 1,50,000)', tableName: 'payments', timestamp: '2026-05-02T11:30:00Z' },
-  { id: 'aud3', userId: 'u2', userName: 'Harshal Zodge', action: 'Logged Generator Service (Refueled diesel)', tableName: 'generator_logs', timestamp: '2026-06-08T10:00:00Z' },
-  { id: 'aud4', userId: 'u4', userName: 'Vikram Shinde', action: 'Marked Stage Setup task IN PROGRESS for Booking BL-202606-0001', tableName: 'operations_checklist', timestamp: '2026-06-11T21:00:00Z' },
-];
+const SEED_AUDIT_LOGS: AuditLog[] = [];
 
 // ==========================================
 // CORE STATE LOADER/WRITER
 // ==========================================
 // Seed versioning control to force reload new data schemas when code updates
 if (isBrowser()) {
-  const CURRENT_SEED_VERSION = 'v8';
+  const CURRENT_SEED_VERSION = 'v9';
   if (localStorage.getItem('bl_erp_seed_version') !== CURRENT_SEED_VERSION) {
     const keysToClear = [
       'profiles', 'venues', 'services', 'packages', 'vendors', 
