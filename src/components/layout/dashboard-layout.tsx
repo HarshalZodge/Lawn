@@ -133,9 +133,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </nav>
 
         {/* BOTTOM PROFILE / LOGOUT */}
-        <div className="p-4 border-t border-purple-primary bg-purple-primary/20">
-          <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-gold-primary text-purple-dark font-bold flex items-center justify-center border-2 border-border-light shadow-md">
+        <div className="p-4 border-t border-purple-primary bg-purple-primary/20 flex items-center justify-between">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="h-10 w-10 rounded-full bg-gold-primary text-purple-dark font-bold flex items-center justify-center border-2 border-border-light shadow-md flex-shrink-0">
               {currentUser.fullName.split(' ').map(n => n[0]).join('')}
             </div>
             <div className="flex-1 min-w-0">
@@ -145,6 +145,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               </span>
             </div>
           </div>
+          <button 
+            onClick={() => {
+              router.push('/');
+            }}
+            className="p-1.5 rounded-lg text-purple-light hover:text-white hover:bg-purple-primary/50 transition-colors"
+            title="Sign Out of ERP"
+          >
+            <LogOut className="h-5 w-5 text-gold-primary" />
+          </button>
         </div>
       </aside>
 
@@ -197,9 +206,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               })}
             </nav>
 
-            <div className="p-4 border-t border-purple-primary bg-purple-primary/20">
-              <div className="flex items-center space-x-3">
-                <div className="h-9 w-9 rounded-full bg-gold-primary text-purple-dark font-bold flex items-center justify-center">
+            <div className="p-4 border-t border-purple-primary bg-purple-primary/20 flex items-center justify-between">
+              <div className="flex items-center space-x-3 min-w-0">
+                <div className="h-9 w-9 rounded-full bg-gold-primary text-purple-dark font-bold flex items-center justify-center flex-shrink-0">
                   {currentUser.fullName.split(' ').map(n => n[0]).join('')}
                 </div>
                 <div className="flex-1 min-w-0">
@@ -207,6 +216,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   <p className="text-[10px] text-gold-primary truncate">{currentUser.role}</p>
                 </div>
               </div>
+              <button 
+                onClick={() => {
+                  setSidebarOpen(false);
+                  router.push('/');
+                }}
+                className="p-1.5 rounded-lg text-purple-light hover:text-white transition-colors"
+                title="Sign Out"
+              >
+                <LogOut className="h-5 w-5 text-gold-primary" />
+              </button>
             </div>
           </aside>
         </div>
