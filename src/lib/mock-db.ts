@@ -253,6 +253,8 @@ const syncToSupabase = async (table: string, action: 'insert' | 'update' | 'dele
       await supabase.from(table).insert(dbData);
     } else if (action === 'update') {
       await supabase.from(table).update(dbData).eq(idColumn, data[idColumn]);
+    } else if (action === 'delete') {
+      await supabase.from(table).delete().eq(idColumn, data[idColumn]);
     }
   } catch (err) {
     console.error(`Supabase Sync Error [${table} - ${action}]:`, err);
@@ -582,6 +584,14 @@ export const db = {
     syncToSupabase('vendors', 'update', cacheVendors[idx]);
     db.addAuditLog(db.getCurrentUser().id, `Updated Vendor details for ${cacheVendors[idx].name}`, 'vendors');
     return cacheVendors[idx];
+  },
+  removeVendor: (id: string): void => {
+    const idx = cacheVendors.findIndex(v => v.id === id);
+    if (idx === -1) throw new Error('Vendor not found');
+    const vendor = cacheVendors[idx];
+    cacheVendors.splice(idx, 1);
+    syncToSupabase('vendors', 'delete', vendor);
+    db.addAuditLog(db.getCurrentUser().id, `Removed Vendor ${vendor.businessName || vendor.name}`, 'vendors');
   },
 
   // Generators

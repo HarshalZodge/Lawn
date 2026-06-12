@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Briefcase, Star, Search, Plus, Phone, Mail, FileText, CheckCircle2, ShieldCheck, X } from 'lucide-react';
+import { Briefcase, Star, Search, Plus, Phone, Mail, FileText, CheckCircle2, ShieldCheck, X, Trash2 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/dashboard-layout';
 import { db } from '@/lib/mock-db';
 import { Vendor } from '@/types';
@@ -51,6 +51,17 @@ export default function VendorManager() {
       alert(`Vendor successfully registered!`);
     } catch (err: any) {
       alert(err.message || 'Vendor already exists.');
+    }
+  };
+
+  const handleDeleteVendor = (id: string, name: string) => {
+    if (confirm(`Are you sure you want to remove vendor "${name}"? This action cannot be undone.`)) {
+      try {
+        db.removeVendor(id);
+        setVendors(db.getVendors());
+      } catch (err: any) {
+        alert(err.message || 'Failed to remove vendor.');
+      }
     }
   };
 
@@ -130,9 +141,18 @@ export default function VendorManager() {
                   {vendor.category}
                 </span>
                 
-                <div className="flex items-center space-x-1 bg-gold-primary/15 text-gold-dark px-2 py-0.5 rounded border border-gold-primary/25 text-[10px] font-bold">
-                  <Star className="h-3.5 w-3.5 fill-gold-primary text-gold-primary shrink-0" />
-                  <span>{Number(vendor.rating).toFixed(1)}</span>
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-1 bg-gold-primary/15 text-gold-dark px-2 py-0.5 rounded border border-gold-primary/25 text-[10px] font-bold">
+                    <Star className="h-3.5 w-3.5 fill-gold-primary text-gold-primary shrink-0" />
+                    <span>{Number(vendor.rating).toFixed(1)}</span>
+                  </div>
+                  <button 
+                    onClick={() => handleDeleteVendor(vendor.id, vendor.businessName || vendor.name)}
+                    className="p-1 rounded text-red-500 hover:text-white hover:bg-red-500 transition-all cursor-pointer"
+                    title="Remove Vendor"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 
