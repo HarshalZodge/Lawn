@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { 
-  Search, Filter, Plus, FileText, User, MapPin, 
-  Clock, IndianRupee, Eye, CheckCircle2, ChevronRight, X 
+  Briefcase, Star, Search, Plus, Phone, Mail, FileText, CheckCircle2, ShieldCheck, X, Pencil, Filter, User, MapPin, 
+  Clock, IndianRupee, Eye, ChevronRight 
 } from 'lucide-react';
 import DashboardLayout from '@/components/layout/dashboard-layout';
 import { db } from '@/lib/mock-db';
@@ -28,6 +28,8 @@ export default function BookingsManager() {
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  const [editingAdvanceBooking, setEditingAdvanceBooking] = useState<Booking | null>(null);
+  const [newAdvanceAmount, setNewAdvanceAmount] = useState<number>(0);
 
   const handleInitiateCancel = (bkg: Booking) => {
     setCancellingBooking(bkg);
@@ -42,6 +44,24 @@ export default function BookingsManager() {
       alert(`Booking ${cancellingBooking.bookingNumber} has been successfully cancelled.`);
     } catch (err: any) {
       alert(err.message || 'An error occurred during booking cancellation.');
+    }
+  };
+
+  const handleInitiateEditAdvance = (bkg: Booking) => {
+    setEditingAdvanceBooking(bkg);
+    setNewAdvanceAmount(bkg.advancePaid);
+  };
+
+  const handleSaveAdvance = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingAdvanceBooking) return;
+    try {
+      db.updateBooking(editingAdvanceBooking.id, { advancePaid: Number(newAdvanceAmount) });
+      setBookings(db.getBookings());
+      setEditingAdvanceBooking(null);
+      alert(`Advance payment for ${editingAdvanceBooking.bookingNumber} successfully updated.`);
+    } catch (err: any) {
+      alert(err.message || 'An error occurred while updating the advance payment.');
     }
   };
 
@@ -366,7 +386,18 @@ export default function BookingsManager() {
                         {formatCurrency(b.totalAmount)}
                       </td>
                       <td className="p-4 text-right font-medium text-gray-500">
-                        <p className="text-green-700 font-bold">{formatCurrency(b.advancePaid)}</p>
+                        <div className="flex items-center justify-end space-x-1.5">
+                          <span className="text-green-700 font-bold">{formatCurrency(b.advancePaid)}</span>
+                          {b.status !== 'Cancelled' && b.status !== 'Completed' && (
+                            <button 
+                              onClick={() => handleInitiateEditAdvance(b)}
+                              className="p-0.5 text-purple-primary hover:bg-purple-light/20 rounded transition-all cursor-pointer"
+                              title="Modify Advance"
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </button>
+                          )}
+                        </div>
                         <p className="text-[10px] text-red-500">Due: {formatCurrency(b.balanceAmount)}</p>
                       </td>
                       <td className="p-4 text-center">
@@ -743,6 +774,68 @@ export default function BookingsManager() {
                 Yes, Cancel Booking
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* EDIT ADVANCE PAYMENT MODAL */}
+      {editingAdvanceBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setEditingAdvanceBooking(null)}></div>
+          
+          <div className="relative w-full max-w-md bg-white rounded-2xl border border-border-light shadow-luxury-lg overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-5 border-b border-border-light bg-purple-dark text-white flex justify-between items-center">
+              <div>
+                <h4 className="font-heading text-sm font-bold">Modify Advance Collected</h4>
+                <p className="text-[9px] text-purple-light uppercase">Booking Ref: {editingAdvanceBooking.bookingNumber}</p>
+              </div>
+              <button onClick={() => setEditingAdvanceBooking(null)} className="p-1 rounded-lg text-purple-light hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveAdvance} className="p-6 space-y-4 text-xs">
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Total Booking Price</label>
+                <div className="p-3 bg-ivory/50 font-bold border border-border-light rounded-lg text-sm text-dark">
+                  {formatCurrency(editingAdvanceBooking.totalAmount)}
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Advance Collected (Rs.) *</label>
+                <input 
+                  type="number" 
+                  required
+                  min={0}
+                  max={editingAdvanceBooking.totalAmount}
+                  value={newAdvanceAmount}
+                  onChange={(e) => setNewAdvanceAmount(Number(e.target.value))}
+                  className="w-full px-3 py-2 bg-ivory/30 border border-border-light focus:outline-none focus:border-gold-primary rounded-lg text-xs font-bold"
+                />
+              </div>
+
+              <div className="bg-purple-light/20 p-3.5 rounded-xl border border-purple-primary/10 text-[10px] text-purple-primary/95 space-y-1">
+                <p>• Updating the advance collected will automatically recalculate the remaining balance due.</p>
+                <p>• This modification will sync and update the associated tax invoice details immediately.</p>
+              </div>
+
+              <div className="pt-4 border-t border-border-light flex justify-end space-x-2">
+                <button 
+                  type="button" 
+                  onClick={() => setEditingAdvanceBooking(null)}
+                  className="px-4 py-2 bg-white text-gray-500 border border-border-light rounded hover:border-purple-primary text-[10px] font-bold cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="px-4 py-2 bg-purple-primary text-white font-bold rounded border border-gold-primary/30 hover:bg-purple-dark text-[10px] shadow-sm cursor-pointer"
+                >
+                  Save Changes
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
