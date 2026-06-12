@@ -20,6 +20,8 @@ export const metadata: Metadata = {
   keywords: ["Wedding ERP", "Banquet Management System", "Wedding Venue Software", "Bhagyalaxmi Lawns", "Ahilyanagar"],
 };
 
+import DatabaseProvider from "@/components/layout/database-provider";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -31,7 +33,9 @@ export default function RootLayout({
       className={`${poppins.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-ivory text-dark font-sans selection:bg-purple-light selection:text-purple-primary">
-        {children}
+        <DatabaseProvider>
+          {children}
+        </DatabaseProvider>
       </body>
     </html>
   );

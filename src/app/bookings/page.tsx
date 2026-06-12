@@ -27,6 +27,23 @@ export default function BookingsManager() {
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+
+  const handleInitiateCancel = (bkg: Booking) => {
+    setCancellingBooking(bkg);
+  };
+
+  const handleConfirmCancel = () => {
+    if (!cancellingBooking) return;
+    try {
+      db.updateBooking(cancellingBooking.id, { status: 'Cancelled' });
+      setBookings(db.getBookings());
+      setCancellingBooking(null);
+      alert(`Booking ${cancellingBooking.bookingNumber} has been successfully cancelled.`);
+    } catch (err: any) {
+      alert(err.message || 'An error occurred during booking cancellation.');
+    }
+  };
 
   // Form states for New Booking wizard
   const [customerId, setCustomerId] = useState('');
@@ -311,12 +328,13 @@ export default function BookingsManager() {
                 <th className="p-4 text-right">Total Price</th>
                 <th className="p-4 text-right">Paid Balance</th>
                 <th className="p-4 text-center">Status</th>
+                <th className="p-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody>
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="p-8 text-center text-gray-500 italic">
+                  <td colSpan={9} className="p-8 text-center text-gray-500 italic">
                     No bookings found matching query.
                   </td>
                 </tr>
@@ -361,11 +379,22 @@ export default function BookingsManager() {
                           {b.status}
                         </span>
                       </td>
+                      <td className="p-4 text-center">
+                        {b.status !== 'Cancelled' && b.status !== 'Completed' ? (
+                          <button
+                            onClick={() => handleInitiateCancel(b)}
+                            className="px-2.5 py-1 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 text-[10px] font-bold rounded-lg border border-red-200 transition-all cursor-pointer shadow-xs"
+                          >
+                            Cancel
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-gray-400 font-medium">—</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })
-              )}
-            </tbody>
+              )/* end mapping */}</tbody>
           </table>
         </div>
       </div>
@@ -667,6 +696,51 @@ export default function BookingsManager() {
                 className="px-5 py-2 bg-purple-primary text-white text-xs font-bold rounded-lg border border-gold-primary/30 hover:bg-purple-dark shadow-md"
               >
                 Confirm Ceremony Schedule
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CANCELLATION CONFIRMATION MODAL */}
+      {cancellingBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setCancellingBooking(null)}></div>
+          
+          <div className="relative w-full max-w-md bg-white rounded-2xl border border-border-light shadow-luxury-lg overflow-hidden animate-in zoom-in duration-200">
+            <div className="p-5 border-b border-border-light bg-red-950 text-white flex justify-between items-center">
+              <div>
+                <h4 className="font-heading text-sm font-bold">Cancel Ceremony Booking</h4>
+                <p className="text-[9px] text-red-200 uppercase">Booking ID: {cancellingBooking.bookingNumber}</p>
+              </div>
+              <button onClick={() => setCancellingBooking(null)} className="p-1 rounded-lg text-red-200 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4">
+              <p className="text-xs text-gray-600 leading-relaxed">
+                Are you sure you want to cancel the booking for the <b>{cancellingBooking.eventType}</b> on <b>{formatDate(cancellingBooking.eventDate)}</b>?
+              </p>
+              <div className="bg-red-50 p-3.5 rounded-xl border border-red-100 text-[10px] text-red-800 space-y-1">
+                <p>• This slot will be released and made available for other bookings immediately.</p>
+                <p>• The associated invoice status will be updated, and operations checklists will be put on hold.</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-ivory border-t border-border-light flex justify-end space-x-2.5">
+              <button 
+                type="button" 
+                onClick={() => setCancellingBooking(null)}
+                className="px-4 py-2 bg-white text-gray-500 text-xs font-bold border border-border-light rounded-lg hover:border-purple-primary transition-all cursor-pointer"
+              >
+                No, Keep Booking
+              </button>
+              <button 
+                onClick={handleConfirmCancel}
+                className="px-4 py-2 bg-red-700 hover:bg-red-800 text-white text-xs font-bold rounded-lg border border-red-800 shadow-sm cursor-pointer"
+              >
+                Yes, Cancel Booking
               </button>
             </div>
           </div>

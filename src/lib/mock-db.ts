@@ -1,5 +1,6 @@
 // Stateful Mock Database for Bhagyalaxmi ERP
-// Supports SSR safety and persists data to localStorage.
+// Maintaining in-memory cache and background synchronization to Supabase.
+// Safe for SSR.
 
 import { 
   Customer, Venue, Booking, Package, Service, Vendor, 
@@ -7,12 +8,18 @@ import {
   AttendanceRecord, GeneratorLog, GeneratorInfo, Expense, 
   WhatsAppTemplate, AuditLog, UserRole, Profile
 } from '@/types';
+import { supabase } from './supabase';
 
 // Helper to check if running in browser
 const isBrowser = () => typeof window !== 'undefined';
 
+const isSupabaseConfigured = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  return url && !url.includes('your-project-ref');
+};
+
 // ==========================================
-// SEED DATA
+// SEED DATA FOR FIRST INITIALIZATION
 // ==========================================
 const SEED_PROFILES: Profile[] = [
   { id: 'u1', email: 'owner@bhagyalaxmi.com', fullName: 'Deepak Zodge', phone: '+91 94222 12345', role: 'Owner', status: 'Active', createdAt: '2026-01-01T10:00:00Z' },
@@ -52,10 +59,90 @@ const SEED_VENDORS: Vendor[] = [
   { id: 'vn4', name: 'Anil Shinde', businessName: 'Shinde Power Solutions', category: 'Generator', phone: '+91 98765 43213', email: 'anil@shindepower.com', contractTerms: 'Supplies backup fuel. Maintenance logs shared monthly.', rating: 4.6, createdAt: '2026-01-13T12:00:00Z' },
 ];
 
-const SEED_CUSTOMERS: Customer[] = [];
-const SEED_BOOKINGS: Booking[] = [];
-const SEED_PAYMENTS: Payment[] = [];
-const SEED_INVOICES: Invoice[] = [];
+const SEED_CUSTOMERS: Customer[] = [
+  { id: 'c1', fullName: 'Abhijit Shinde', phone: '9822012345', email: 'abhijit@gmail.com', address: 'Bhingar, Ahilyanagar', createdAt: '2026-05-01T10:00:00Z' },
+  { id: 'c2', fullName: 'Snehal Patil', phone: '9850067890', email: 'snehal@yahoo.com', address: 'Nagardeole, Ahilyanagar', createdAt: '2026-05-10T11:00:00Z' }
+];
+
+const SEED_BOOKINGS: Booking[] = [
+  {
+    id: 'b1',
+    bookingNumber: 'BL-202606-0001',
+    customerId: 'c1',
+    venueId: 'v1',
+    packageId: 'p1',
+    eventType: 'Wedding',
+    eventDate: '2026-06-18',
+    slotType: 'Full Day Slot',
+    guestCount: 600,
+    decorationTheme: 'Royal Marigold',
+    totalAmount: 180000,
+    advancePaid: 60000,
+    balanceAmount: 120000,
+    status: 'Advance Paid',
+    createdAt: '2026-05-02T10:00:00Z'
+  },
+  {
+    id: 'b2',
+    bookingNumber: 'BL-202606-0002',
+    customerId: 'c2',
+    venueId: 'v2',
+    packageId: 'p2',
+    eventType: 'Reception',
+    eventDate: '2026-06-25',
+    slotType: 'Evening Slot',
+    guestCount: 1500,
+    decorationTheme: 'Shahi Wada theme',
+    totalAmount: 350000,
+    advancePaid: 350000,
+    balanceAmount: 0,
+    status: 'Confirmed',
+    createdAt: '2026-05-12T11:00:00Z'
+  }
+];
+
+const SEED_PAYMENTS: Payment[] = [
+  { id: 'pay_1', bookingId: 'b1', paymentNumber: 'BL-PAY-10001', amount: 60000, paymentDate: '2026-05-02T10:30:00Z', paymentMethod: 'UPI', transactionId: 'TXN998877', paymentStatus: 'Success', notes: 'Initial booking deposit' },
+  { id: 'pay_2', bookingId: 'b2', paymentNumber: 'BL-PAY-10002', amount: 350000, paymentDate: '2026-05-12T12:00:00Z', paymentMethod: 'Bank Transfer', transactionId: 'TXN445566', paymentStatus: 'Success', notes: 'Full package rate payout' },
+];
+
+const SEED_INVOICES: Invoice[] = [
+  {
+    id: 'inv_1',
+    invoiceNumber: 'BL-INV-202606-0001',
+    bookingId: 'b1',
+    subtotal: 152542.37,
+    cgstRate: 9,
+    sgstRate: 9,
+    cgstAmount: 13728.81,
+    sgstAmount: 13728.81,
+    totalGst: 27457.63,
+    grandTotal: 180000,
+    advanceDeducted: 60000,
+    balanceDue: 120000,
+    status: 'Partially Paid',
+    issuedDate: '2026-05-02',
+    dueDate: '2026-06-18'
+  },
+  {
+    id: 'inv_2',
+    invoiceNumber: 'BL-INV-202606-0002',
+    bookingId: 'b2',
+    subtotal: 296610.17,
+    cgstRate: 9,
+    sgstRate: 9,
+    cgstAmount: 26694.92,
+    sgstAmount: 26694.92,
+    totalGst: 53389.83,
+    grandTotal: 350000,
+    advanceDeducted: 350000,
+    balanceDue: 0,
+    status: 'Paid',
+    issuedDate: '2026-05-12',
+    dueDate: '2026-06-25'
+  }
+];
+
 const SEED_CHECKLISTS: ChecklistTask[] = [];
 
 const SEED_STAFF: StaffMember[] = [
@@ -84,123 +171,216 @@ const SEED_WHATSAPP: WhatsAppTemplate[] = [
 const SEED_AUDIT_LOGS: AuditLog[] = [];
 
 // ==========================================
-// CORE STATE LOADER/WRITER
+// IN-MEMORY DATABASE CACHE
 // ==========================================
-// Seed versioning control to force reload new data schemas when code updates
-if (isBrowser()) {
-  const CURRENT_SEED_VERSION = 'v9';
-  if (localStorage.getItem('bl_erp_seed_version') !== CURRENT_SEED_VERSION) {
-    const keysToClear = [
-      'profiles', 'venues', 'services', 'packages', 'vendors', 
-      'customers', 'bookings', 'payments', 'invoices', 'checklist', 
-      'staff', 'attendance', 'expenses', 'documents', 'whatsapp_templates', 
-      'audit_logs', 'generator_logs', 'generators_info', 'parking_records', 
-      'active_user_id'
-    ];
-    keysToClear.forEach(key => localStorage.removeItem(`bl_erp_${key}`));
-    localStorage.setItem('bl_erp_seed_version', CURRENT_SEED_VERSION);
-  }
-}
+let cacheProfiles: Profile[] = [...SEED_PROFILES];
+let cacheVenues: Venue[] = [...SEED_VENUES];
+let cacheServices: Service[] = [...SEED_SERVICES];
+let cachePackages: Package[] = [...SEED_PACKAGES];
+let cacheVendors: Vendor[] = [...SEED_VENDORS];
+let cacheCustomers: Customer[] = [...SEED_CUSTOMERS];
+let cacheBookings: Booking[] = [...SEED_BOOKINGS];
+let cachePayments: Payment[] = [...SEED_PAYMENTS];
+let cacheInvoices: Invoice[] = [...SEED_INVOICES];
+let cacheChecklist: ChecklistTask[] = [];
+let cacheStaff: StaffMember[] = [...SEED_STAFF];
+let cacheAttendance: AttendanceRecord[] = [];
+let cacheGeneratorsInfo: GeneratorInfo[] = [...SEED_GENERATORS_INFO];
+let cacheGeneratorLogs: GeneratorLog[] = [];
+let cacheExpenses: Expense[] = [];
+let cacheDocuments: Document[] = [];
+let cacheWhatsAppTemplates: WhatsAppTemplate[] = [...SEED_WHATSAPP];
+let cacheAuditLogs: AuditLog[] = [];
+let activeUserId = 'u2';
 
-const getStoreValue = <T>(key: string, defaultValue: T): T => {
-  if (!isBrowser()) return defaultValue;
-  const val = localStorage.getItem(`bl_erp_${key}`);
-  if (!val) {
-    localStorage.setItem(`bl_erp_${key}`, JSON.stringify(defaultValue));
-    return defaultValue;
-  }
-  try {
-    return JSON.parse(val);
-  } catch (e) {
-    return defaultValue;
-  }
+// Seed Roles utility lookup (Supabase role uuid <-> role string)
+export let roleIdToName: Record<string, string> = {};
+export let roleNameToId: Record<string, string> = {};
+
+export const setRolesLookups = (roles: { id: string, name: string }[]) => {
+  roles.forEach(r => {
+    roleIdToName[r.id] = r.name;
+    roleNameToId[r.name] = r.id;
+  });
 };
 
-const setStoreValue = <T>(key: string, value: T): void => {
-  if (!isBrowser()) return;
-  localStorage.setItem(`bl_erp_${key}`, JSON.stringify(value));
+// ==========================================
+// CAMEL/SNAKE CONVERSION UTILITIES
+// ==========================================
+export const camelToSnake = (obj: any): any => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(camelToSnake);
+  if (typeof obj === 'object') {
+    const res: any = {};
+    for (const key of Object.keys(obj)) {
+      const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+      res[snakeKey] = camelToSnake(obj[key]);
+    }
+    return res;
+  }
+  return obj;
+};
+
+export const snakeToCamel = (obj: any): any => {
+  if (obj === null || obj === undefined) return obj;
+  if (Array.isArray(obj)) return obj.map(snakeToCamel);
+  if (typeof obj === 'object') {
+    const res: any = {};
+    for (const key of Object.keys(obj)) {
+      const camelKey = key.replace(/([-_][a-z])/g, group =>
+        group.toUpperCase().replace('-', '').replace('_', '')
+      );
+      res[camelKey] = snakeToCamel(obj[key]);
+    }
+    return res;
+  }
+  return obj;
+};
+
+// ==========================================
+// CLOUD SYNC HELPER
+// ==========================================
+const syncToSupabase = async (table: string, action: 'insert' | 'update' | 'delete', data: any, idColumn: string = 'id') => {
+  if (!isSupabaseConfigured()) return;
+  try {
+    const dbData = camelToSnake(data);
+    
+    // Schema manual transforms
+    if (table === 'profiles') {
+      const roleId = roleNameToId[data.role];
+      if (roleId) {
+        dbData.role_id = roleId;
+        delete dbData.role;
+      }
+    }
+    if (table === 'staff') {
+      delete dbData.full_name;
+      delete dbData.role;
+      delete dbData.status;
+    }
+
+    if (action === 'insert') {
+      await supabase.from(table).insert(dbData);
+    } else if (action === 'update') {
+      await supabase.from(table).update(dbData).eq(idColumn, data[idColumn]);
+    }
+  } catch (err) {
+    console.error(`Supabase Sync Error [${table} - ${action}]:`, err);
+  }
 };
 
 // ==========================================
 // PUBLIC DATABASE APIs
 // ==========================================
-
 export const db = {
+  // Sync initialization called by DatabaseProvider
+  setInMemoryData: (data: {
+    profiles?: Profile[];
+    venues?: Venue[];
+    services?: Service[];
+    packages?: Package[];
+    vendors?: Vendor[];
+    customers?: Customer[];
+    bookings?: Booking[];
+    payments?: Payment[];
+    invoices?: Invoice[];
+    checklist?: ChecklistTask[];
+    staff?: StaffMember[];
+    attendance?: AttendanceRecord[];
+    generatorsInfo?: GeneratorInfo[];
+    generatorLogs?: GeneratorLog[];
+    expenses?: Expense[];
+    documents?: Document[];
+    whatsappTemplates?: WhatsAppTemplate[];
+    auditLogs?: AuditLog[];
+  }) => {
+    if (data.profiles) cacheProfiles = data.profiles;
+    if (data.venues) cacheVenues = data.venues;
+    if (data.services) cacheServices = data.services;
+    if (data.packages) cachePackages = data.packages;
+    if (data.vendors) cacheVendors = data.vendors;
+    if (data.customers) cacheCustomers = data.customers;
+    if (data.bookings) cacheBookings = data.bookings;
+    if (data.payments) cachePayments = data.payments;
+    if (data.invoices) cacheInvoices = data.invoices;
+    if (data.checklist) cacheChecklist = data.checklist;
+    if (data.staff) cacheStaff = data.staff;
+    if (data.attendance) cacheAttendance = data.attendance;
+    if (data.generatorsInfo) cacheGeneratorsInfo = data.generatorsInfo;
+    if (data.generatorLogs) cacheGeneratorLogs = data.generatorLogs;
+    if (data.expenses) cacheExpenses = data.expenses;
+    if (data.documents) cacheDocuments = data.documents;
+    if (data.whatsappTemplates) cacheWhatsAppTemplates = data.whatsappTemplates;
+    if (data.auditLogs) cacheAuditLogs = data.auditLogs;
+  },
+
   // Profiles
-  getProfiles: (): Profile[] => getStoreValue('profiles', SEED_PROFILES),
+  getProfiles: (): Profile[] => cacheProfiles,
   
-  // Active User / Role selection
+  // Active Session
   getCurrentUser: (): Profile => {
-    const profiles = db.getProfiles();
-    const activeUserId = getStoreValue('active_user_id', 'u2'); // Default to Sanjay Patole (Manager)
-    return profiles.find(p => p.id === activeUserId) || profiles[0];
+    return cacheProfiles.find(p => p.id === activeUserId) || cacheProfiles[0] || SEED_PROFILES[0];
   },
   setCurrentUser: (userId: string): void => {
-    setStoreValue('active_user_id', userId);
-    // Add audit log
-    const user = db.getProfiles().find(p => p.id === userId);
+    activeUserId = userId;
+    const user = cacheProfiles.find(p => p.id === userId);
     if (user) {
       db.addAuditLog(userId, `Switched session role to ${user.role}`, 'profiles');
     }
   },
 
   // Customers
-  getCustomers: (): Customer[] => getStoreValue('customers', SEED_CUSTOMERS),
+  getCustomers: (): Customer[] => cacheCustomers,
   addCustomer: (cust: Omit<Customer, 'id' | 'createdAt'>): Customer => {
-    const customers = db.getCustomers();
     const newCust: Customer = {
       ...cust,
       id: `c_${Date.now()}`,
       createdAt: new Date().toISOString()
     };
-    customers.push(newCust);
-    setStoreValue('customers', customers);
+    cacheCustomers.push(newCust);
+    syncToSupabase('customers', 'insert', newCust);
     db.addAuditLog(db.getCurrentUser().id, `Added Customer ${newCust.fullName}`, 'customers');
     return newCust;
   },
   updateCustomer: (id: string, updates: Partial<Customer>): Customer => {
-    const customers = db.getCustomers();
-    const idx = customers.findIndex(c => c.id === id);
+    const idx = cacheCustomers.findIndex(c => c.id === id);
     if (idx === -1) throw new Error('Customer not found');
-    customers[idx] = { ...customers[idx], ...updates };
-    setStoreValue('customers', customers);
-    db.addAuditLog(db.getCurrentUser().id, `Updated Customer ${customers[idx].fullName}`, 'customers');
-    return customers[idx];
+    cacheCustomers[idx] = { ...cacheCustomers[idx], ...updates };
+    syncToSupabase('customers', 'update', cacheCustomers[idx]);
+    db.addAuditLog(db.getCurrentUser().id, `Updated Customer ${cacheCustomers[idx].fullName}`, 'customers');
+    return cacheCustomers[idx];
   },
 
   // Venues
-  getVenues: (): Venue[] => getStoreValue('venues', SEED_VENUES),
+  getVenues: (): Venue[] => cacheVenues,
   updateVenue: (id: string, updates: Partial<Venue>): Venue => {
-    const venues = db.getVenues();
-    const idx = venues.findIndex(v => v.id === id);
+    const idx = cacheVenues.findIndex(v => v.id === id);
     if (idx === -1) throw new Error('Venue not found');
-    venues[idx] = { ...venues[idx], ...updates };
-    setStoreValue('venues', venues);
-    db.addAuditLog(db.getCurrentUser().id, `Updated Venue Status for ${venues[idx].name}`, 'venues');
-    return venues[idx];
+    cacheVenues[idx] = { ...cacheVenues[idx], ...updates };
+    syncToSupabase('venues', 'update', cacheVenues[idx]);
+    db.addAuditLog(db.getCurrentUser().id, `Updated Venue Status for ${cacheVenues[idx].name}`, 'venues');
+    return cacheVenues[idx];
   },
 
   // Services & Packages
-  getServices: (): Service[] => getStoreValue('services', SEED_SERVICES),
-  getPackages: (): Package[] => getStoreValue('packages', SEED_PACKAGES),
+  getServices: (): Service[] => cacheServices,
+  getPackages: (): Package[] => cachePackages,
   addPackage: (pkg: Omit<Package, 'id'>): Package => {
-    const pkgs = db.getPackages();
     const newPkg: Package = { ...pkg, id: `pkg_${Date.now()}` };
-    pkgs.push(newPkg);
-    setStoreValue('packages', pkgs);
+    cachePackages.push(newPkg);
+    syncToSupabase('packages', 'insert', newPkg);
     db.addAuditLog(db.getCurrentUser().id, `Created Service Package ${newPkg.name}`, 'packages');
     return newPkg;
   },
 
   // Bookings
-  getBookings: (): Booking[] => getStoreValue('bookings', SEED_BOOKINGS),
+  getBookings: (): Booking[] => cacheBookings,
   addBooking: (bkg: Omit<Booking, 'id' | 'bookingNumber' | 'createdAt' | 'balanceAmount'>): Booking => {
-    const bookings = db.getBookings();
-    const count = bookings.filter(b => b.bookingNumber.startsWith(`BL-${new Date().getFullYear()}`)).length + 1;
+    const count = cacheBookings.filter(b => b.bookingNumber.startsWith(`BL-${new Date().getFullYear()}`)).length + 1;
     const bookingNumber = `BL-${new Date().getFullYear()}${(new Date().getMonth() + 1).toString().padStart(2, '0')}-${count.toString().padStart(4, '0')}`;
     
-    // Check for double bookings on same venue + date + slot overlap
-    const hasOverlap = bookings.some(b => 
+    // Check overlap
+    const hasOverlap = cacheBookings.some(b => 
       b.venueId === bkg.venueId && 
       b.eventDate === bkg.eventDate && 
       b.status !== 'Cancelled' &&
@@ -218,30 +398,27 @@ export const db = {
       balanceAmount: bkg.totalAmount - bkg.advancePaid,
       createdAt: new Date().toISOString()
     };
-    bookings.push(newBooking);
-    setStoreValue('bookings', bookings);
+    cacheBookings.push(newBooking);
+    syncToSupabase('bookings', 'insert', newBooking);
 
-    // Auto generate an invoice
+    // Auto generate invoice & operations checklist
     db.createInvoiceForBooking(newBooking);
-
-    // Auto generate default operations checklist tasks
     db.createDefaultChecklist(newBooking.id);
 
     db.addAuditLog(db.getCurrentUser().id, `Created Booking ${newBooking.bookingNumber} for ${newBooking.eventType}`, 'bookings');
     return newBooking;
   },
   updateBooking: (id: string, updates: Partial<Booking>): Booking => {
-    const bookings = db.getBookings();
-    const idx = bookings.findIndex(b => b.id === id);
+    const idx = cacheBookings.findIndex(b => b.id === id);
     if (idx === -1) throw new Error('Booking not found');
     
-    const prevStatus = bookings[idx].status;
-    const merged = { ...bookings[idx], ...updates };
+    const prevStatus = cacheBookings[idx].status;
+    const merged = { ...cacheBookings[idx], ...updates };
     merged.balanceAmount = merged.totalAmount - merged.advancePaid;
-    bookings[idx] = merged;
-    setStoreValue('bookings', bookings);
+    cacheBookings[idx] = merged;
+    syncToSupabase('bookings', 'update', merged);
 
-    // Update corresponding invoice if totals changed
+    // Update invoice
     db.updateInvoiceForBooking(merged);
 
     if (prevStatus !== merged.status) {
@@ -253,10 +430,9 @@ export const db = {
   },
 
   // Payments
-  getPayments: (): Payment[] => getStoreValue('payments', SEED_PAYMENTS),
+  getPayments: (): Payment[] => cachePayments,
   addPayment: (pay: Omit<Payment, 'id' | 'paymentNumber' | 'paymentDate' | 'paymentStatus'>): Payment => {
-    const payments = db.getPayments();
-    const paymentNumber = `BL-PAY-${(payments.length + 10001)}`;
+    const paymentNumber = `BL-PAY-${(cachePayments.length + 10001)}`;
     const newPayment: Payment = {
       ...pay,
       id: `pay_${Date.now()}`,
@@ -264,13 +440,12 @@ export const db = {
       paymentDate: new Date().toISOString(),
       paymentStatus: 'Success'
     };
-    payments.push(newPayment);
-    setStoreValue('payments', payments);
+    cachePayments.push(newPayment);
+    syncToSupabase('payments', 'insert', newPayment);
 
-    // Update booking's advancePaid/balanceAmount
-    const booking = db.getBookings().find(b => b.id === pay.bookingId);
+    // Update booking balance
+    const booking = cacheBookings.find(b => b.id === pay.bookingId);
     if (booking) {
-      const isAdvance = booking.advancePaid === 0;
       const newAdvance = Number(booking.advancePaid) + Number(pay.amount);
       const newStatus = newAdvance >= booking.totalAmount ? 'Confirmed' : 'Advance Paid';
       db.updateBooking(booking.id, {
@@ -284,11 +459,9 @@ export const db = {
   },
 
   // Invoices
-  getInvoices: (): Invoice[] => getStoreValue('invoices', SEED_INVOICES),
+  getInvoices: (): Invoice[] => cacheInvoices,
   createInvoiceForBooking: (booking: Booking): Invoice => {
-    const invoices = db.getInvoices();
     const invoiceNumber = `BL-INV-${booking.bookingNumber.substring(3)}`;
-    
     const grandTotal = booking.totalAmount;
     const subtotal = Number((grandTotal / 1.18).toFixed(2));
     const totalGst = Number((grandTotal - subtotal).toFixed(2));
@@ -313,20 +486,18 @@ export const db = {
       dueDate: booking.eventDate
     };
     
-    invoices.push(newInvoice);
-    setStoreValue('invoices', invoices);
+    cacheInvoices.push(newInvoice);
+    syncToSupabase('invoices', 'insert', newInvoice);
     return newInvoice;
   },
   updateInvoiceForBooking: (booking: Booking): void => {
-    const invoices = db.getInvoices();
-    const idx = invoices.findIndex(inv => inv.bookingId === booking.id);
+    const idx = cacheInvoices.findIndex(inv => inv.bookingId === booking.id);
     if (idx === -1) {
       db.createInvoiceForBooking(booking);
       return;
     }
-    const inv = invoices[idx];
+    const inv = cacheInvoices[idx];
     
-    // Preserve custom metered and misc costs
     const genHours = inv.generatorHours || 0;
     const genRate = inv.generatorRate || 0;
     const elecUnits = inv.electricityUnits || 0;
@@ -341,7 +512,7 @@ export const db = {
     const sgstAmount = Number((totalGst / 2).toFixed(2));
     const balanceDue = Number((grandTotal - booking.advancePaid).toFixed(2));
 
-    invoices[idx] = {
+    cacheInvoices[idx] = {
       ...inv,
       subtotal,
       cgstAmount,
@@ -353,22 +524,20 @@ export const db = {
       status: booking.advancePaid === 0 ? 'Unpaid' : (balanceDue <= 0 ? 'Paid' : 'Partially Paid'),
       dueDate: booking.eventDate
     };
-    setStoreValue('invoices', invoices);
+    syncToSupabase('invoices', 'update', cacheInvoices[idx]);
   },
   updateInvoice: (id: string, updates: Partial<Invoice>): Invoice => {
-    const invoices = db.getInvoices();
-    const idx = invoices.findIndex(inv => inv.id === id);
+    const idx = cacheInvoices.findIndex(inv => inv.id === id);
     if (idx === -1) throw new Error('Invoice not found');
-    invoices[idx] = { ...invoices[idx], ...updates };
-    setStoreValue('invoices', invoices);
-    db.addAuditLog(db.getCurrentUser().id, `Updated Invoice parameters for ${invoices[idx].invoiceNumber}`, 'invoices');
-    return invoices[idx];
+    cacheInvoices[idx] = { ...cacheInvoices[idx], ...updates };
+    syncToSupabase('invoices', 'update', cacheInvoices[idx]);
+    db.addAuditLog(db.getCurrentUser().id, `Updated Invoice parameters for ${cacheInvoices[idx].invoiceNumber}`, 'invoices');
+    return cacheInvoices[idx];
   },
 
-  // Event Operations & Checklist Tasks
-  getChecklist: (): ChecklistTask[] => getStoreValue('checklist', SEED_CHECKLISTS),
+  // Operations Checklist
+  getChecklist: (): ChecklistTask[] => cacheChecklist,
   createDefaultChecklist: (bookingId: string): void => {
-    const list = db.getChecklist();
     const defaults: Omit<ChecklistTask, 'id' | 'bookingId' | 'updatedAt'>[] = [
       { taskName: 'Setup Main Entrance Gate Welcoming Banner', category: 'Decoration', status: 'Pending' },
       { taskName: 'Construct and Decorate Event Stage', category: 'Stage', status: 'Pending' },
@@ -383,77 +552,69 @@ export const db = {
     ];
     
     defaults.forEach((task, i) => {
-      list.push({
+      const newTask: ChecklistTask = {
         ...task,
         id: `ch_task_${bookingId}_${i}_${Date.now()}`,
         bookingId,
         updatedAt: new Date().toISOString()
-      });
+      };
+      cacheChecklist.push(newTask);
+      syncToSupabase('operations_checklist', 'insert', newTask);
     });
-    setStoreValue('checklist', list);
   },
   updateChecklistTask: (id: string, updates: Partial<ChecklistTask>): ChecklistTask => {
-    const list = db.getChecklist();
-    const idx = list.findIndex(task => task.id === id);
+    const idx = cacheChecklist.findIndex(task => task.id === id);
     if (idx === -1) throw new Error('Task not found');
-    list[idx] = { 
-      ...list[idx], 
+    cacheChecklist[idx] = { 
+      ...cacheChecklist[idx], 
       ...updates, 
       updatedAt: new Date().toISOString() 
     };
-    setStoreValue('checklist', list);
-    
-    // Add audit log
-    db.addAuditLog(
-      db.getCurrentUser().id, 
-      `Marked Task "${list[idx].taskName}" as ${list[idx].status}`, 
-      'operations_checklist'
-    );
-    return list[idx];
+    syncToSupabase('operations_checklist', 'update', cacheChecklist[idx]);
+    db.addAuditLog(db.getCurrentUser().id, `Marked Task "${cacheChecklist[idx].taskName}" as ${cacheChecklist[idx].status}`, 'operations_checklist');
+    return cacheChecklist[idx];
   },
 
   // Vendors
-  getVendors: (): Vendor[] => getStoreValue('vendors', SEED_VENDORS),
+  getVendors: (): Vendor[] => cacheVendors,
   addVendor: (vendor: Omit<Vendor, 'id' | 'rating' | 'createdAt'>): Vendor => {
-    const vendors = db.getVendors();
     const newVendor: Vendor = {
       ...vendor,
       id: `vn_${Date.now()}`,
       rating: 5.0,
       createdAt: new Date().toISOString()
     };
-    vendors.push(newVendor);
-    setStoreValue('vendors', vendors);
+    cacheVendors.push(newVendor);
+    syncToSupabase('vendors', 'insert', newVendor);
     db.addAuditLog(db.getCurrentUser().id, `Registered Vendor ${newVendor.businessName || newVendor.name}`, 'vendors');
     return newVendor;
   },
   updateVendor: (id: string, updates: Partial<Vendor>): Vendor => {
-    const vendors = db.getVendors();
-    const idx = vendors.findIndex(v => v.id === id);
+    const idx = cacheVendors.findIndex(v => v.id === id);
     if (idx === -1) throw new Error('Vendor not found');
-    vendors[idx] = { ...vendors[idx], ...updates };
-    setStoreValue('vendors', vendors);
-    db.addAuditLog(db.getCurrentUser().id, `Updated Vendor details for ${vendors[idx].name}`, 'vendors');
-    return vendors[idx];
+    cacheVendors[idx] = { ...cacheVendors[idx], ...updates };
+    syncToSupabase('vendors', 'update', cacheVendors[idx]);
+    db.addAuditLog(db.getCurrentUser().id, `Updated Vendor details for ${cacheVendors[idx].name}`, 'vendors');
+    return cacheVendors[idx];
   },
 
   // Staff & Attendance
-  getStaff: (): StaffMember[] => getStoreValue('staff', SEED_STAFF),
-  getAttendance: (): AttendanceRecord[] => getStoreValue('attendance', SEED_ATTENDANCE),
+  getStaff: (): StaffMember[] => cacheStaff,
+  getAttendance: (): AttendanceRecord[] => cacheAttendance,
   addStaff: (member: Omit<StaffMember, 'id' | 'joiningDate' | 'status'>): StaffMember => {
-    const staff = db.getStaff();
     const newMember: StaffMember = {
       ...member,
       id: `st_${Date.now()}`,
       joiningDate: new Date().toISOString().split('T')[0],
       status: 'Active'
     };
-    staff.push(newMember);
-    setStoreValue('staff', staff);
+    cacheStaff.push(newMember);
+
+    // Sync to Supabase staff table
+    syncToSupabase('staff', 'insert', newMember);
     
-    // Create matching user profile
-    const profiles = db.getProfiles();
-    profiles.push({
+    // Add user profile matching staff member
+    const newProfile: Profile = {
       id: member.profileId,
       email: `${member.fullName.toLowerCase().replace(/\s+/g, '')}@bhagyalaxmi.com`,
       fullName: member.fullName,
@@ -461,108 +622,104 @@ export const db = {
       role: member.role,
       status: 'Active',
       createdAt: new Date().toISOString()
-    });
-    setStoreValue('profiles', profiles);
+    };
+    cacheProfiles.push(newProfile);
+    syncToSupabase('profiles', 'insert', newProfile);
 
     db.addAuditLog(db.getCurrentUser().id, `Hired Staff Member ${newMember.fullName}`, 'staff');
     return newMember;
   },
   logAttendance: (staffId: string, status: AttendanceRecord['status'], notes?: string): AttendanceRecord => {
-    const records = db.getAttendance();
     const today = new Date().toISOString().split('T')[0];
-    const idx = records.findIndex(r => r.staffId === staffId && r.logDate === today);
+    const idx = cacheAttendance.findIndex(r => r.staffId === staffId && r.logDate === today);
     
     const record: AttendanceRecord = {
-      id: idx !== -1 ? records[idx].id : `at_${Date.now()}`,
+      id: idx !== -1 ? cacheAttendance[idx].id : `at_${Date.now()}`,
       staffId,
       logDate: today,
-      checkIn: idx !== -1 ? records[idx].checkIn : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
+      checkIn: idx !== -1 ? cacheAttendance[idx].checkIn : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
       checkOut: status === 'Absent' ? undefined : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }),
       status,
       notes
     };
 
     if (idx !== -1) {
-      records[idx] = record;
+      cacheAttendance[idx] = record;
+      syncToSupabase('attendance', 'update', record);
     } else {
-      records.push(record);
+      cacheAttendance.push(record);
+      syncToSupabase('attendance', 'insert', record);
     }
-    setStoreValue('attendance', records);
     return record;
-  },  // Generator logs
-  getGeneratorsInfo: (): GeneratorInfo[] => getStoreValue('generators_info', SEED_GENERATORS_INFO),
-  getGeneratorLogs: (): GeneratorLog[] => getStoreValue('generator_logs', SEED_GENERATOR_LOGS),
+  },
+
+  // Generators
+  getGeneratorsInfo: (): GeneratorInfo[] => cacheGeneratorsInfo,
+  getGeneratorLogs: (): GeneratorLog[] => cacheGeneratorLogs,
   addGeneratorLog: (log: Omit<GeneratorLog, 'id' | 'logDate'>): GeneratorLog => {
-    const logs = db.getGeneratorLogs();
     const newLog: GeneratorLog = {
       ...log,
       id: `gen_${Date.now()}`,
       logDate: new Date().toISOString().split('T')[0]
     };
-    logs.unshift(newLog); // newer logs first
-    setStoreValue('generator_logs', logs);
-    const gen = db.getGeneratorsInfo().find(g => g.id === log.generatorId);
+    cacheGeneratorLogs.unshift(newLog);
+    syncToSupabase('generator_logs', 'insert', newLog);
+    const gen = cacheGeneratorsInfo.find(g => g.id === log.generatorId);
     db.addAuditLog(db.getCurrentUser().id, `Logged parameters for Generator: ${gen ? gen.name : log.generatorId} (Fuel: ${log.fuelLevelPercent}%)`, 'generator_logs');
     return newLog;
   },
   updateGeneratorStatus: (id: string, status: GeneratorInfo['status']): void => {
-    const gens = db.getGeneratorsInfo();
-    const idx = gens.findIndex(g => g.id === id);
+    const idx = cacheGeneratorsInfo.findIndex(g => g.id === id);
     if (idx !== -1) {
-      gens[idx].status = status;
-      setStoreValue('generators_info', gens);
-      db.addAuditLog(db.getCurrentUser().id, `Updated Generator ${gens[idx].name} status to ${status}`, 'generators_info');
+      cacheGeneratorsInfo[idx].status = status;
+      syncToSupabase('generators_info', 'update', cacheGeneratorsInfo[idx]);
+      db.addAuditLog(db.getCurrentUser().id, `Updated Generator ${cacheGeneratorsInfo[idx].name} status to ${status}`, 'generators_info');
     }
   },
+
   // Expenses
-  getExpenses: (): Expense[] => getStoreValue('expenses', SEED_EXPENSES),
+  getExpenses: (): Expense[] => cacheExpenses,
   addExpense: (exp: Omit<Expense, 'id' | 'expenseDate'>): Expense => {
-    const expenses = db.getExpenses();
     const newExp: Expense = {
       ...exp,
       id: `exp_${Date.now()}`,
       expenseDate: new Date().toISOString().split('T')[0]
     };
-    expenses.push(newExp);
-    setStoreValue('expenses', expenses);
+    cacheExpenses.push(newExp);
+    syncToSupabase('expenses', 'insert', newExp);
     db.addAuditLog(db.getCurrentUser().id, `Logged Business Expense: Rs. ${newExp.amount} for ${newExp.category}`, 'expenses');
     return newExp;
   },
 
   // Documents
-  getDocuments: (): Document[] => getStoreValue('documents', SEED_DOCUMENTS),
+  getDocuments: (): Document[] => cacheDocuments,
   addDocument: (doc: Omit<Document, 'id' | 'uploadedAt'>): Document => {
-    const docs = db.getDocuments();
     const newDoc: Document = {
       ...doc,
       id: `doc_${Date.now()}`,
       uploadedAt: new Date().toISOString()
     };
-    docs.push(newDoc);
-    setStoreValue('documents', docs);
+    cacheDocuments.push(newDoc);
+    syncToSupabase('documents', 'insert', newDoc);
     db.addAuditLog(db.getCurrentUser().id, `Uploaded ${doc.category} Document: ${doc.name}`, 'documents');
     return newDoc;
   },
 
   // WhatsApp templates
-  getWhatsAppTemplates: (): WhatsAppTemplate[] => getStoreValue('whatsapp_templates', SEED_WHATSAPP),
+  getWhatsAppTemplates: (): WhatsAppTemplate[] => cacheWhatsAppTemplates,
   updateWhatsAppTemplate: (id: string, updates: Partial<WhatsAppTemplate>): WhatsAppTemplate => {
-    const temps = db.getWhatsAppTemplates();
-    const idx = temps.findIndex(t => t.id === id);
+    const idx = cacheWhatsAppTemplates.findIndex(t => t.id === id);
     if (idx === -1) throw new Error('Template not found');
-    temps[idx] = { ...temps[idx], ...updates };
-    setStoreValue('whatsapp_templates', temps);
-    db.addAuditLog(db.getCurrentUser().id, `Updated WhatsApp Message Template "${temps[idx].templateName}"`, 'whatsapp_templates');
-    return temps[idx];
+    cacheWhatsAppTemplates[idx] = { ...cacheWhatsAppTemplates[idx], ...updates };
+    syncToSupabase('whatsapp_templates', 'update', cacheWhatsAppTemplates[idx]);
+    db.addAuditLog(db.getCurrentUser().id, `Updated WhatsApp Message Template "${cacheWhatsAppTemplates[idx].templateName}"`, 'whatsapp_templates');
+    return cacheWhatsAppTemplates[idx];
   },
 
   // Audit Logs
-  getAuditLogs: (): AuditLog[] => getStoreValue('audit_logs', SEED_AUDIT_LOGS),
+  getAuditLogs: (): AuditLog[] => cacheAuditLogs,
   addAuditLog: (userId: string, action: string, tableName: string): void => {
-    const logs = db.getAuditLogs();
-    const profiles = db.getProfiles();
-    const user = profiles.find(p => p.id === userId);
-    
+    const user = cacheProfiles.find(p => p.id === userId);
     const newLog: AuditLog = {
       id: `aud_${Date.now()}`,
       userId,
@@ -571,7 +728,8 @@ export const db = {
       tableName,
       timestamp: new Date().toISOString()
     };
-    logs.unshift(newLog); // Newer logs at the top
-    setStoreValue('audit_logs', logs.slice(0, 100)); // Cap at 100 logs
+    cacheAuditLogs.unshift(newLog);
+    syncToSupabase('audit_logs', 'insert', newLog);
+    if (cacheAuditLogs.length > 100) cacheAuditLogs = cacheAuditLogs.slice(0, 100);
   }
 };

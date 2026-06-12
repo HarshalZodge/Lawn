@@ -95,6 +95,22 @@ export default function VisualCalendar() {
     setIsDrawerOpen(true);
   };
 
+  const handleDrawerCancelBooking = () => {
+    if (!selectedBooking) return;
+    const confirmCancel = window.confirm(`Are you sure you want to cancel booking ${selectedBooking.bookingNumber}?`);
+    if (confirmCancel) {
+      try {
+        const updated = db.updateBooking(selectedBooking.id, { status: 'Cancelled' });
+        setBookings(db.getBookings());
+        setSelectedBooking(updated);
+        alert(`Booking ${selectedBooking.bookingNumber} successfully cancelled.`);
+        setIsDrawerOpen(false);
+      } catch (err: any) {
+        alert(err.message || 'Error occurred during cancellation.');
+      }
+    }
+  };
+
   // Drag and drop simulation: Shifting booking date
   const [draggedBooking, setDraggedBooking] = useState<Booking | null>(null);
 
@@ -432,19 +448,29 @@ export default function VisualCalendar() {
             </div>
 
             {/* Drawer Actions */}
-            <div className="p-6 border-t border-border-light bg-ivory flex space-x-3">
-              <Link 
-                href="/finance" 
-                className="flex-1 py-2.5 bg-purple-primary text-white font-bold rounded-lg border border-gold-primary/30 text-xs text-center shadow-md hover:bg-purple-dark"
-              >
-                Invoicing & Payments
-              </Link>
-              <Link
-                href="/operations"
-                className="flex-1 py-2.5 bg-white text-purple-primary font-bold rounded-lg border border-border-light text-xs text-center shadow-sm hover:border-gold-primary"
-              >
-                Launch Checklists
-              </Link>
+            <div className="p-6 border-t border-border-light bg-ivory flex flex-col space-y-2.5">
+              <div className="flex space-x-3">
+                <Link 
+                  href="/finance" 
+                  className="flex-1 py-2.5 bg-purple-primary text-white font-bold rounded-lg border border-gold-primary/30 text-xs text-center shadow-md hover:bg-purple-dark"
+                >
+                  Invoicing & Payments
+                </Link>
+                <Link
+                  href="/operations"
+                  className="flex-1 py-2.5 bg-white text-purple-primary font-bold rounded-lg border border-border-light text-xs text-center shadow-sm hover:border-gold-primary"
+                >
+                  Launch Checklists
+                </Link>
+              </div>
+              {selectedBooking.status !== 'Cancelled' && selectedBooking.status !== 'Completed' && (
+                <button
+                  onClick={handleDrawerCancelBooking}
+                  className="w-full py-2.5 bg-red-50 text-red-750 hover:bg-red-100 hover:text-red-800 font-bold rounded-lg border border-red-200 text-xs text-center transition-all cursor-pointer shadow-xs"
+                >
+                  Cancel Booking
+                </button>
+              )}
             </div>
           </div>
         </div>

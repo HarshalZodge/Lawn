@@ -22,6 +22,9 @@ export default function DocumentManager() {
   
   // Upload Modal State
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [fileBase64, setFileBase64] = useState<string>('');
+  const [dragActive, setDragActive] = useState(false);
   
   // Form fields
   const [docName, setDocName] = useState('');
@@ -38,17 +41,56 @@ export default function DocumentManager() {
     setBookings(db.getBookings());
   }, []);
 
+  const handleFileChange = (file: File) => {
+    setSelectedFile(file);
+    const fileNameWithoutExt = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+    setDocName(fileNameWithoutExt);
+    
+    // Read file as base64 data URL
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      if (event.target?.result) {
+        setFileBase64(event.target.result as string);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileChange(e.dataTransfer.files[0]);
+    }
+  };
+
   const handleUploadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!docName) return;
+    if (!docName || !selectedFile) {
+      alert('Please select or drop a file before confirming upload.');
+      return;
+    }
 
     try {
+      const ext = selectedFile.name.split('.').pop();
+      const finalName = docName.endsWith(`.${ext}`) ? docName : `${docName}.${ext}`;
       const newDoc = db.addDocument({
-        name: docName.endsWith('.pdf') ? docName : `${docName}.pdf`,
+        name: finalName,
         category,
         customerId: customerId || undefined,
         bookingId: bookingId || undefined,
-        filePath: '#'
+        filePath: fileBase64 || '#'
       });
 
       setDocuments(db.getDocuments());
@@ -58,6 +100,8 @@ export default function DocumentManager() {
       setDocName('');
       setCustomerId('');
       setBookingId('');
+      setSelectedFile(null);
+      setFileBase64('');
       alert(`Document "${newDoc.name}" uploaded successfully!`);
     } catch (err: any) {
       alert(err.message);
@@ -253,6 +297,38 @@ export default function DocumentManager() {
             </div>
 
             <form onSubmit={handleUploadSubmit} className="p-6 space-y-4 text-xs">
+              {/* Drag and Drop Zone */}
+              <div 
+                onDragEnter={handleDrag}
+                onDragOver={handleDrag}
+                onDragLeave={handleDrag}
+                onDrop={handleDrop}
+                className={cn(
+                  "p-5 border-2 border-dashed rounded-xl text-center flex flex-col items-center justify-center transition-all cursor-pointer",
+                  dragActive ? "border-purple-primary bg-purple-light/20" : "border-border-light bg-ivory/25 hover:border-gold-primary"
+                )}
+              >
+                <input 
+                  type="file" 
+                  id="file-upload-input"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleFileChange(e.target.files[0]);
+                    }
+                  }}
+                />
+                <label htmlFor="file-upload-input" className="cursor-pointer flex flex-col items-center w-full">
+                  <Upload className="h-8 w-8 text-gold-primary mb-2 animate-pulse" />
+                  <p className="font-bold text-purple-dark text-xs truncate max-w-[280px]">
+                    {selectedFile ? selectedFile.name : 'Select or drag your file here'}
+                  </p>
+                  <p className="text-[10px] text-gray-400 mt-1">
+                    {selectedFile ? `Size: ${(selectedFile.size / 1024).toFixed(1)} KB` : 'Supports PDF, JPG, PNG up to 2MB'}
+                  </p>
+                </label>
+              </div>
+
               <div>
                 <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Document Name *</label>
                 <input 
@@ -344,9 +420,13 @@ export default function DocumentManager() {
               </button>
             </div>
             
-            {/* Mock PDF preview canvas */}
-            <div className="p-10 bg-ivory text-center flex flex-col justify-center items-center h-96">
-              <FileText className="h-20 w-20 text-gold-primary mb-4 animate-bounce" />
+             {/* Real or Mock preview canvas */}
+            <div className="p-10 bg-ivory text-center flex flex-col justify-center items-center h-96 overflow-y-auto">
+              {previewDoc.filePath.startsWith('data:image/') ? (
+                <img src={previewDoc.filePath} alt={previewDoc.name} className="max-h-64 object-contain mb-4 rounded-lg shadow-md border border-border-light" />
+              ) : (
+                <FileText className="h-20 w-20 text-gold-primary mb-4 animate-bounce" />
+              )}
               <h5 className="font-heading text-sm font-bold text-purple-dark">{previewDoc.name}</h5>
               <p className="text-xs text-gray-500 max-w-sm mt-2">
                 This document ({previewDoc.category}) is safely stored on the cloud server. Supabase Storage buckets have generated a secure link.
