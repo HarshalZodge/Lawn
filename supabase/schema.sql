@@ -308,38 +308,25 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 -- ==========================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ==========================================
+ALTER TABLE roles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE venues DISABLE ROW LEVEL SECURITY;
+ALTER TABLE services DISABLE ROW LEVEL SECURITY;
+ALTER TABLE packages DISABLE ROW LEVEL SECURITY;
+ALTER TABLE vendors DISABLE ROW LEVEL SECURITY;
+ALTER TABLE customers DISABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE payments DISABLE ROW LEVEL SECURITY;
 ALTER TABLE invoices DISABLE ROW LEVEL SECURITY;
-ALTER TABLE customers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE operations_checklist DISABLE ROW LEVEL SECURITY;
+ALTER TABLE generator_logs DISABLE ROW LEVEL SECURITY;
 ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE documents DISABLE ROW LEVEL SECURITY;
+ALTER TABLE whatsapp_templates DISABLE ROW LEVEL SECURITY;
 ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
 
--- Simple Policies for Demonstration:
--- Owner & Manager can read/write everything. 
--- Accountants can read everything and write payments/invoices/expenses.
--- Staff can read their profiles and bookings, update operations_checklists.
-
--- Drop existing policies if running multiple times to avoid name collision errors
 DROP POLICY IF EXISTS owner_manager_all ON profiles;
 DROP POLICY IF EXISTS owner_manager_bookings ON bookings;
-
-CREATE POLICY owner_manager_all ON profiles FOR ALL USING (
-    EXISTS (
-        SELECT 1 FROM profiles p 
-        JOIN roles r ON p.role_id = r.id 
-        WHERE p.id = auth.uid() AND r.name IN ('Owner', 'Manager', 'Super Admin')
-    )
-);
-
-CREATE POLICY owner_manager_bookings ON bookings FOR ALL USING (
-    EXISTS (
-        SELECT 1 FROM profiles p 
-        JOIN roles r ON p.role_id = r.id 
-        WHERE p.id = auth.uid() AND r.name IN ('Owner', 'Manager', 'Super Admin', 'Accountant', 'Event Coordinator')
-    )
-);
 
 -- ==========================================
 -- INDEXES FOR PERFORMANCE
