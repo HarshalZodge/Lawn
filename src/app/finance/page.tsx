@@ -161,8 +161,8 @@ export default function FinanceManager() {
 
     const matchesSearch = 
       inv.invoiceNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer?.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      booking?.bookingNumber.toLowerCase().includes(searchQuery.toLowerCase());
+      (customer?.fullName?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+      (booking?.bookingNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false);
 
     const matchesStatus = statusFilter === 'All' || inv.status === statusFilter;
 
@@ -282,7 +282,7 @@ export default function FinanceManager() {
       </div>
 
       {/* FULL-SCREEN PRINTABLE INVOICE FOCUS MODAL */}
-      {selectedInvoice && customerMatch && bookingMatch && (
+      {selectedInvoice && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs print:absolute print:inset-0 print:bg-white print:p-0">
           <div className="relative w-full max-w-4xl bg-white rounded-2xl border border-border-light shadow-luxury-lg overflow-hidden max-h-[90vh] flex flex-col justify-between animate-in zoom-in duration-300 print:max-h-none print:border-none print:shadow-none print:rounded-none">
             {/* Modal Actions Header Bar */}
@@ -444,7 +444,7 @@ export default function FinanceManager() {
                   <p className="text-xs text-gray-500 mt-1 font-medium">
                     Invoice No: <span className="font-bold text-dark">{selectedInvoice.invoiceNumber}</span><br />
                     Dated: <span className="font-semibold text-dark">{formatDate(selectedInvoice.issuedDate)}</span><br />
-                    Booking ID: <span className="font-semibold text-dark">{bookingMatch.bookingNumber}</span>
+                    Booking ID: <span className="font-semibold text-dark">{bookingMatch?.bookingNumber || 'N/A'}</span>
                   </p>
                 </div>
               </div>
@@ -453,18 +453,18 @@ export default function FinanceManager() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 py-6 text-xs border-b border-border-light">
                 <div>
                   <h5 className="font-bold text-purple-primary uppercase mb-2">Billed To (Customer details):</h5>
-                  <p className="text-sm font-bold text-dark">{customerMatch.fullName}</p>
-                  <p className="text-gray-500 mt-1">Phone: <span className="font-semibold text-dark">{customerMatch.phone}</span></p>
-                  {customerMatch.email && <p className="text-gray-500">Email: <span className="font-semibold text-dark">{customerMatch.email}</span></p>}
-                  {customerMatch.address && <p className="text-gray-500">Address: <span className="font-semibold text-dark">{customerMatch.address}</span></p>}
+                  <p className="text-sm font-bold text-dark">{customerMatch?.fullName || 'N/A'}</p>
+                  <p className="text-gray-500 mt-1">Phone: <span className="font-semibold text-dark">{customerMatch?.phone || 'N/A'}</span></p>
+                  {customerMatch?.email && <p className="text-gray-500">Email: <span className="font-semibold text-dark">{customerMatch.email}</span></p>}
+                  {customerMatch?.address && <p className="text-gray-500">Address: <span className="font-semibold text-dark">{customerMatch.address}</span></p>}
                 </div>
                 <div>
                   <h5 className="font-bold text-purple-primary uppercase mb-2">Ceremony Specifications:</h5>
                   <div className="space-y-1.5">
-                    <p className="text-gray-500">Event Category: <span className="font-bold text-dark">{bookingMatch.eventType}</span></p>
-                    <p className="text-gray-500">Scheduled Date: <span className="font-bold text-dark">{formatDate(bookingMatch.eventDate)} ({bookingMatch.slotType})</span></p>
-                    <p className="text-gray-500">Expected Guests: <span className="font-semibold text-dark">{bookingMatch.guestCount} Pax</span></p>
-                    <p className="text-gray-500">Decor Theme: <span className="font-semibold text-dark">{bookingMatch.decorationTheme || 'Heritage Paithani'}</span></p>
+                    <p className="text-gray-500">Event Category: <span className="font-bold text-dark">{bookingMatch?.eventType || 'N/A'}</span></p>
+                    <p className="text-gray-500">Scheduled Date: <span className="font-bold text-dark">{bookingMatch?.eventDate ? formatDate(bookingMatch.eventDate) : 'N/A'} ({bookingMatch?.slotType || 'N/A'})</span></p>
+                    <p className="text-gray-500">Expected Guests: <span className="font-semibold text-dark">{bookingMatch?.guestCount || 0} Pax</span></p>
+                    <p className="text-gray-500">Decor Theme: <span className="font-semibold text-dark">{bookingMatch?.decorationTheme || 'Heritage Paithani'}</span></p>
                   </div>
                 </div>
               </div>
@@ -488,8 +488,8 @@ export default function FinanceManager() {
                         <p className="text-[10px] text-gray-500">Covers slot timings, standard room accesses, cleanups & backup utility controls.</p>
                       </td>
                       <td className="p-3 text-center">1 Unit</td>
-                      <td className="p-3 text-right">{formatCurrency(bookingMatch.totalAmount / 1.18 * 0.7)}</td>
-                      <td className="p-3 text-right">{formatCurrency(bookingMatch.totalAmount / 1.18 * 0.7)}</td>
+                      <td className="p-3 text-right">{formatCurrency((bookingMatch?.totalAmount || 0) / 1.18 * 0.7)}</td>
+                      <td className="p-3 text-right">{formatCurrency((bookingMatch?.totalAmount || 0) / 1.18 * 0.7)}</td>
                     </tr>
                     {/* Item 2: Decor & Addons */}
                     <tr className="border-b border-border-light">
@@ -498,8 +498,8 @@ export default function FinanceManager() {
                         <p className="text-[10px] text-gray-500">Allocated DJ setup, spot lighting controls, VIP sofa seating & canopy decor.</p>
                       </td>
                       <td className="p-3 text-center">1 Job</td>
-                      <td className="p-3 text-right">{formatCurrency(bookingMatch.totalAmount / 1.18 * 0.3)}</td>
-                      <td className="p-3 text-right">{formatCurrency(bookingMatch.totalAmount / 1.18 * 0.3)}</td>
+                      <td className="p-3 text-right">{formatCurrency((bookingMatch?.totalAmount || 0) / 1.18 * 0.3)}</td>
+                      <td className="p-3 text-right">{formatCurrency((bookingMatch?.totalAmount || 0) / 1.18 * 0.3)}</td>
                     </tr>
                     {/* Item 3: Generator Backup (Metered) */}
                     {selectedInvoice.generatorHours && selectedInvoice.generatorHours > 0 && selectedInvoice.generatorRate && selectedInvoice.generatorRate > 0 && (
