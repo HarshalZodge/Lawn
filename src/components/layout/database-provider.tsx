@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { db, snakeToCamel, roleIdToName, setRolesLookups } from '@/lib/mock-db';
+import { db, snakeToCamel, camelToSnake, roleIdToName, roleNameToId, setRolesLookups } from '@/lib/mock-db';
 import { Profile, UserRole } from '@/types';
 
 const DatabaseContext = createContext<{ loaded: boolean }>({ loaded: false });
@@ -41,6 +41,19 @@ export default function DatabaseProvider({ children }: { children: React.ReactNo
             }));
           } else {
             profiles = db.getProfiles();
+            const configured = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project-ref');
+            if (configured && profiles && profiles.length > 0) {
+              const dbProfiles = profiles.map(p => {
+                const snake = camelToSnake(p);
+                const roleId = roleNameToId[p.role];
+                if (roleId) {
+                  snake.role_id = roleId;
+                  delete snake.role;
+                }
+                return snake;
+              });
+              await supabase.from('profiles').insert(dbProfiles);
+            }
           }
         } catch (e) {
           profiles = db.getProfiles();
@@ -51,9 +64,18 @@ export default function DatabaseProvider({ children }: { children: React.ReactNo
           try {
             const { data, error } = await supabase.from(tableName).select('*');
             if (error) throw error;
-            return data && data.length > 0 ? snakeToCamel(data) : defaultValue;
+            if (data && data.length > 0) {
+              return snakeToCamel(data);
+            } else {
+              const configured = process.env.NEXT_PUBLIC_SUPABASE_URL && !process.env.NEXT_PUBLIC_SUPABASE_URL.includes('your-project-ref');
+              if (configured && defaultValue && defaultValue.length > 0) {
+                const dbData = defaultValue.map(item => camelToSnake(item));
+                await supabase.from(tableName).insert(dbData);
+              }
+              return defaultValue;
+            }
           } catch (e) {
-            console.warn(`Fallback to local seed for table: ${tableName}`);
+            console.warn(`Fallback to local seed for table: ${tableName}`, e);
             return defaultValue;
           }
         };

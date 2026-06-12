@@ -72,10 +72,10 @@ CREATE TABLE IF NOT EXISTS venues (
 );
 
 -- Seed Venues (Safe check on duplicate venue names)
-INSERT INTO venues (name, capacity, base_price, amenities, description) VALUES
-('Wedding Hall', 1200, 150000.00, ARRAY['Air Conditioning', 'Chandelier Lighting', 'Sound System', 'Bride Room', 'Groom Room'], 'Luxurious indoor air-conditioned banquet hall with royal decor'),
-('Open Lawn', 2500, 200000.00, ARRAY['Fountain', 'Premium Grass Turf', 'Stage Area', 'High Mast Lights', 'Buffet Area'], 'Spectacular outdoor green lawns perfect for grand wedding receptions and events'),
-('Combined Venue', 3700, 300000.00, ARRAY['All Hall Amenities', 'All Lawn Amenities', 'VIP Entrance', 'Ample Valet Parking'], 'The ultimate luxury experience combining both the indoor hall and the outdoor lawns for maximum scale')
+INSERT INTO venues (id, name, capacity, base_price, amenities, description) VALUES
+('b1111111-1111-1111-1111-111111111111', 'Wedding Hall', 1200, 150000.00, ARRAY['Air Conditioning', 'Chandelier Lighting', 'Sound System', 'Bride Room', 'Groom Room'], 'Luxurious indoor air-conditioned banquet hall with royal decor'),
+('b2222222-2222-2222-2222-222222222222', 'Open Lawn', 2500, 200000.00, ARRAY['Fountain', 'Premium Grass Turf', 'Stage Area', 'High Mast Lights', 'Buffet Area'], 'Spectacular outdoor green lawns perfect for grand wedding receptions and events'),
+('b3333333-3333-3333-3333-333333333333', 'Combined Venue', 3700, 300000.00, ARRAY['All Hall Amenities', 'All Lawn Amenities', 'VIP Entrance', 'Ample Valet Parking'], 'The ultimate luxury experience combining both the indoor hall and the outdoor lawns for maximum scale')
 ON CONFLICT (name) DO NOTHING;
 
 -- ==========================================
@@ -100,24 +100,24 @@ CREATE TABLE IF NOT EXISTS services (
 );
 
 -- Seed Services
-INSERT INTO services (name, category, default_price, description) VALUES
-('Royal Paithani Stage Decor', 'Decoration', 50000.00, 'Maharashtrian heritage-themed floral stage setup'),
-('Traditional Buffet Catering', 'Catering', 450.00, 'Pure vegetarian Maharashtrian menu per plate'),
-('Professional Wedding DJ & Lights', 'DJ', 25000.00, 'High-end sound system with intelligent stage lights'),
-('Heavy-Duty Sound System', 'DJ', 15000.00, 'JBL sound rigs with cordless microphones'),
-('Cinematic Wedding Photography', 'Photography', 60000.00, 'Traditional & candid coverage with high-end cameras'),
-('Generator Fuel & Backup', 'Generator', 12000.00, '125 KVA silent backup with fuel coverage up to 6 hours'),
-('Bride & Groom AC Rooms', 'Accommodation', 5000.00, 'Premium private dressing suites with restrooms'),
-('Valet & Parking Marshals', 'Parking', 8000.00, '10 parking coordinators managing entrance/valet'),
-('Armed Security Officers', 'Security', 15000.00, '4 professional bodyguards for gate and VIP control'),
-('Live Shehnai & Dhol Tasha', 'Decoration', 18000.00, 'Traditional live welcoming musicians')
+INSERT INTO services (id, name, category, default_price, description) VALUES
+('c1111111-1111-1111-1111-111111111111', 'Royal Paithani Stage Decor', 'Decoration', 50000.00, 'Maharashtrian heritage-themed floral stage setup'),
+('c2222222-2222-2222-2222-222222222222', 'Traditional Buffet Catering', 'Catering', 450.00, 'Pure vegetarian Maharashtrian menu per plate'),
+('c3333333-3333-3333-3333-333333333333', 'Professional Wedding DJ & Lights', 'DJ', 25000.00, 'High-end sound system with intelligent stage lights'),
+('c4444444-4444-4444-4444-444444444444', 'Heavy-Duty Sound System', 'DJ', 15000.00, 'JBL sound rigs with cordless microphones'),
+('c5555555-5555-5555-5555-555555555555', 'Cinematic Wedding Photography', 'Photography', 60000.00, 'Traditional & candid coverage with high-end cameras'),
+('c6666666-6666-6666-6666-666666666666', 'Generator Fuel & Backup', 'Generator', 12000.00, '125 KVA silent backup with fuel coverage up to 6 hours'),
+('c7777777-7777-7777-7777-777777777777', 'Bride & Groom AC Rooms', 'Accommodation', 5000.00, 'Premium private dressing suites with restrooms'),
+('c8888888-8888-8888-8888-888888888888', 'Event Valet & Security Marshals', 'Security', 8000.00, '10 parking coordinators managing entrance/valet'),
+('c9999999-9999-9999-9999-999999999999', 'Armed Security Officers', 'Security', 15000.00, '4 professional bodyguards for gate and VIP control'),
+('caaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', 'Live Shehnai & Dhol Tasha', 'Decoration', 18000.00, 'Traditional live welcoming musicians')
 ON CONFLICT (name) DO NOTHING;
 
 -- Seed Default Packages
-INSERT INTO packages (name, description, base_price, included_services) VALUES
-('Classic Wedding', 'Standard wedding hall booking including basic decor, bride room, generator, and parking assistance', 180000.00, '[]'),
-('Royal Maharashtrian Heritage', 'Premium combined hall and lawn event with Royal Paithani stage decor, shehnai, full lighting setup, generator backup, security, and rooms', 350000.00, '[]'),
-('Grand Reception & Dinner', 'Open lawn evening reception package with buffet caterer coordination, DJ system, VIP security, and lighting', 280000.00, '[]')
+INSERT INTO packages (id, name, description, base_price, included_services) VALUES
+('d1111111-1111-1111-1111-111111111111', 'Classic Wedding', 'Standard wedding hall booking including basic decor, bride room, generator, and parking assistance', 180000.00, '[]'),
+('d2222222-2222-2222-2222-222222222222', 'Royal Maharashtrian Heritage', 'Premium combined hall and lawn event with Royal Paithani stage decor, shehnai, full lighting setup, generator backup, security, and rooms', 350000.00, '[]'),
+('d3333333-3333-3333-3333-333333333333', 'Grand Reception & Dinner', 'Open lawn evening reception package with buffet caterer coordination, DJ system, VIP security, and lighting', 280000.00, '[]')
 ON CONFLICT (name) DO NOTHING;
 
 -- ==========================================
@@ -136,11 +136,11 @@ CREATE TABLE IF NOT EXISTS vendors (
 );
 
 -- Seed Vendors
-INSERT INTO vendors (name, business_name, category, phone, email, contract_terms) VALUES
-('Sanjay Deshmukh', 'Shivaji Caterers', 'Catering', '9876543210', 'sanjay@shivajicaterers.com', 'Requires 20% advance, full payment 2 days before event. Pure Veg only.'),
-('Vijay Kadam', 'Golden Stage Decorators', 'Decoration', '9876543211', 'vijay@goldendecor.com', 'Stage setup must begin 12 hours before event slot. Materials provided.'),
-('DJ Rahul', 'Bassline Events Ahilyanagar', 'DJ', '9876543212', 'rahul@bassline.com', 'Permits for music after 10 PM to be managed by client/venue.'),
-('Anil Shinde', 'Shinde Power Solutions', 'Generator', '9876543213', 'anil@shindepower.com', 'Supplies backup fuel. Maintenance logs shared monthly.')
+INSERT INTO vendors (id, name, business_name, category, phone, email, contract_terms) VALUES
+('f1111111-1111-1111-1111-111111111111', 'Sanjay Deshmukh', 'Shivaji Caterers', 'Catering', '9876543210', 'sanjay@shivajicaterers.com', 'Requires 20% advance, full payment 2 days before event. Pure Veg only.'),
+('f2222222-2222-2222-2222-222222222222', 'Vijay Kadam', 'Golden Stage Decorators', 'Decoration', '9876543211', 'vijay@goldendecor.com', 'Stage setup must begin 12 hours before event slot. Materials provided.'),
+('f3333333-3333-3333-3333-333333333333', 'DJ Rahul', 'Bassline Events Ahilyanagar', 'DJ', '9876543212', 'rahul@bassline.com', 'Permits for music after 10 PM to be managed by client/venue.'),
+('f4444444-4444-4444-4444-444444444444', 'Anil Shinde', 'Shinde Power Solutions', 'Generator', '9876543213', 'anil@shindepower.com', 'Supplies backup fuel. Maintenance logs shared monthly.')
 ON CONFLICT (phone) DO NOTHING;
 
 -- ==========================================
