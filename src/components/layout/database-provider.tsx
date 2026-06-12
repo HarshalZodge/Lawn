@@ -3,7 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { db, snakeToCamel, roleIdToName, setRolesLookups } from '@/lib/mock-db';
-import { Profile, StaffMember, UserRole } from '@/types';
+import { Profile, UserRole } from '@/types';
 
 const DatabaseContext = createContext<{ loaded: boolean }>({ loaded: false });
 
@@ -67,38 +67,11 @@ export default function DatabaseProvider({ children }: { children: React.ReactNo
         const payments = await fetchTable('payments', db.getPayments());
         const invoices = await fetchTable('invoices', db.getInvoices());
         const checklist = await fetchTable('operations_checklist', db.getChecklist());
-        const attendance = await fetchTable('attendance', db.getAttendance());
         const generatorLogs = await fetchTable('generator_logs', db.getGeneratorLogs());
         const expenses = await fetchTable('expenses', db.getExpenses());
         const documents = await fetchTable('documents', db.getDocuments());
         const whatsappTemplates = await fetchTable('whatsapp_templates', db.getWhatsAppTemplates());
         const auditLogs = await fetchTable('audit_logs', db.getAuditLogs());
-
-        // Staff join mapping
-        let staff: StaffMember[] = [];
-        try {
-          const { data: dbStaff } = await supabase.from('staff').select('*');
-          if (dbStaff && dbStaff.length > 0) {
-            staff = dbStaff.map((s: any) => {
-              const p = profiles.find(profile => profile.id === s.profile_id);
-              return {
-                id: s.id,
-                profileId: s.profile_id,
-                fullName: p?.fullName || '',
-                role: p?.role || 'Staff',
-                designation: s.designation,
-                salary: s.salary ? Number(s.salary) : undefined,
-                contactNumber: s.contact_number,
-                joiningDate: s.joining_date,
-                status: p?.status === 'Active' ? 'Active' : 'Inactive'
-              };
-            });
-          } else {
-            staff = db.getStaff();
-          }
-        } catch (e) {
-          staff = db.getStaff();
-        }
 
         // Populate in-memory database
         db.setInMemoryData({
@@ -112,8 +85,6 @@ export default function DatabaseProvider({ children }: { children: React.ReactNo
           payments,
           invoices,
           checklist,
-          staff,
-          attendance,
           generatorLogs,
           expenses,
           documents,

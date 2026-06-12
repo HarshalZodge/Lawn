@@ -6,6 +6,7 @@ import { Crown, ShieldCheck, Heart, User, CheckCircle2, MapPin, KeyRound, ArrowL
 import { motion, AnimatePresence } from 'framer-motion';
 import { db } from '@/lib/mock-db';
 import { Profile } from '@/types';
+import { getCookie, setCookie } from '@/lib/utils';
 
 export default function EntryPortal() {
   const router = useRouter();
@@ -16,7 +17,19 @@ export default function EntryPortal() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    setProfiles(db.getProfiles());
+    const profilesList = db.getProfiles();
+    setProfiles(profilesList);
+    
+    // Check if session already exists
+    const session = getCookie('bhagyalaxmi_session');
+    if (session) {
+      const user = profilesList.find(p => p.id === session);
+      if (user) {
+        db.setCurrentUser(user.id);
+        router.push('/dashboard');
+        return;
+      }
+    }
     setMounted(true);
   }, []);
 
@@ -38,6 +51,7 @@ export default function EntryPortal() {
 
     if (isCorrect) {
       db.setCurrentUser(selectedProfile.id);
+      setCookie('bhagyalaxmi_session', selectedProfile.id, 7); // Expire in 7 days
       router.push('/dashboard');
     } else {
       setError('Access Denied: Invalid Security Passcode');

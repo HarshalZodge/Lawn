@@ -151,27 +151,6 @@ export interface ChecklistTask {
   updatedAt: string;
 }
 
-export interface StaffMember {
-  id: string;
-  profileId: string;
-  fullName: string;
-  role: UserRole;
-  designation: string;
-  salary?: number;
-  contactNumber: string;
-  joiningDate: string;
-  status: 'Active' | 'Inactive';
-}
-
-export interface AttendanceRecord {
-  id: string;
-  staffId: string;
-  logDate: string; // YYYY-MM-DD
-  checkIn?: string; // HH:MM
-  checkOut?: string; // HH:MM
-  status: 'Present' | 'Absent' | 'Leave' | 'Half-Day';
-  notes?: string;
-}
 
 export interface GeneratorLog {
   id: string;

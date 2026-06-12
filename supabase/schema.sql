@@ -229,28 +229,6 @@ CREATE TABLE IF NOT EXISTS operations_checklist (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- ==========================================
--- 11. STAFF & ATTENDANCE
--- ==========================================
-CREATE TABLE IF NOT EXISTS staff (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    profile_id UUID REFERENCES profiles(id) UNIQUE,
-    designation VARCHAR(100) NOT NULL,
-    salary DECIMAL(10, 2),
-    contact_number VARCHAR(20) NOT NULL,
-    joining_date DATE DEFAULT CURRENT_DATE
-);
-
-CREATE TABLE IF NOT EXISTS attendance (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    staff_id UUID REFERENCES staff(id) NOT NULL,
-    log_date DATE NOT NULL DEFAULT CURRENT_DATE,
-    check_in TIME,
-    check_out TIME,
-    status VARCHAR(20) DEFAULT 'Present' CHECK (status IN ('Present', 'Absent', 'Leave', 'Half-Day')),
-    notes TEXT,
-    UNIQUE(staff_id, log_date)
-);
 
 -- ==========================================
 -- 12. GENERATOR & POWER TRACKING
@@ -330,13 +308,13 @@ CREATE TABLE IF NOT EXISTS audit_logs (
 -- ==========================================
 -- ROW LEVEL SECURITY (RLS) POLICIES
 -- ==========================================
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE invoices ENABLE ROW LEVEL SECURITY;
-ALTER TABLE customers ENABLE ROW LEVEL SECURITY;
-ALTER TABLE expenses ENABLE ROW LEVEL SECURITY;
-ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
+ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+ALTER TABLE bookings DISABLE ROW LEVEL SECURITY;
+ALTER TABLE payments DISABLE ROW LEVEL SECURITY;
+ALTER TABLE invoices DISABLE ROW LEVEL SECURITY;
+ALTER TABLE customers DISABLE ROW LEVEL SECURITY;
+ALTER TABLE expenses DISABLE ROW LEVEL SECURITY;
+ALTER TABLE audit_logs DISABLE ROW LEVEL SECURITY;
 
 -- Simple Policies for Demonstration:
 -- Owner & Manager can read/write everything. 
@@ -371,5 +349,4 @@ CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
 CREATE INDEX IF NOT EXISTS idx_payments_booking_id ON payments(booking_id);
 CREATE INDEX IF NOT EXISTS idx_invoices_booking_id ON invoices(booking_id);
 CREATE INDEX IF NOT EXISTS idx_customers_phone ON customers(phone);
-CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(log_date);
 CREATE INDEX IF NOT EXISTS idx_operations_booking_id ON operations_checklist(booking_id);

@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 import { db } from '@/lib/mock-db';
 import { Profile, UserRole } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, getCookie, eraseCookie } from '@/lib/utils';
 
 interface SidebarItem {
   name: string;
@@ -32,7 +32,6 @@ const SIDEBAR_ITEMS: SidebarItem[] = [
   { name: 'Finance & Invoices', href: '/finance', icon: IndianRupee, roles: ['Owner', 'Accountant', 'Super Admin'] },
   { name: 'Vendor Manager', href: '/vendors', icon: Briefcase, roles: ['Owner', 'Manager', 'Accountant', 'Super Admin'] },
   { name: 'Generator Operations', href: '/operations/utility', icon: Zap, roles: ['Owner', 'Manager', 'Staff', 'Super Admin'] },
-  { name: 'Staff & Attendance', href: '/staff', icon: UserCheck, roles: ['Owner', 'Manager', 'Super Admin'] },
   { name: 'Reports & Analytics', href: '/reports', icon: BarChart3, roles: ['Owner', 'Accountant', 'Super Admin'] },
   { name: 'WhatsApp Templates', href: '/whatsapp', icon: MessageSquare, roles: ['Owner', 'Manager', 'Super Admin'] },
   { name: 'Owner Center', href: '/owner', icon: Crown, roles: ['Owner', 'Super Admin'] },
@@ -47,11 +46,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [authChecked, setAuthChecked] = useState(false);
 
   useEffect(() => {
-    // Initialize user profile
-    const user = db.getCurrentUser();
+    // Verify session
+    const session = getCookie('bhagyalaxmi_session');
+    if (!session) {
+      router.push('/');
+      return;
+    }
+    const profiles = db.getProfiles();
+    const user = profiles.find(p => p.id === session);
+    if (!user) {
+      router.push('/');
+      return;
+    }
+    db.setCurrentUser(user.id);
     setCurrentUser(user);
     setAuthChecked(true);
-  }, []);
+  }, [pathname]);
 
   // Permission verification
   const currentItem = SIDEBAR_ITEMS.find(item => pathname.startsWith(item.href));
@@ -133,6 +143,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
           <button 
             onClick={() => {
+              eraseCookie('bhagyalaxmi_session');
               router.push('/');
             }}
             className="p-1.5 rounded-lg text-purple-light hover:text-white hover:bg-purple-primary/50 transition-colors"
@@ -205,6 +216,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <button 
                 onClick={() => {
                   setSidebarOpen(false);
+                  eraseCookie('bhagyalaxmi_session');
                   router.push('/');
                 }}
                 className="p-1.5 rounded-lg text-purple-light hover:text-white transition-colors"
